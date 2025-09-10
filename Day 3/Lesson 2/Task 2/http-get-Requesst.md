@@ -6,7 +6,7 @@
 
 ## Goal
 
-Build a simple workflow that makes a **GET** request to a public API and presents a clean, readable result.
+Build a simple workflow that makes a **GET** request to a public API 
 
 Workflow overview:
 ```
