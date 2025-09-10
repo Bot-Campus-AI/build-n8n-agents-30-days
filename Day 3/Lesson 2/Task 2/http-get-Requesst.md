@@ -1,6 +1,6 @@
 # HTTP Requests — Making n8n Talk to the World (GET Only)
 
-Audience: First‑time n8n users and non‑technical readers. Each step is split into clear sub‑steps with `+` and `→` indicators. Drag‑and‑drop requirements are explicitly noted.
+
 
 ---
 
