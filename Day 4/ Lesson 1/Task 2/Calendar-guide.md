@@ -7,7 +7,6 @@
 ## What you’ll build
 `Manual Trigger ➝ Google Calendar (Create an event) ➝ Google Calendar (Get an event by ID)`
 
-![Canvas overview](images/canvas-overview.png)
 
 ---
 
@@ -29,7 +28,6 @@
 Connect **Manual Trigger ➝ Create an event** and click **Execute step**.
 You should receive an output with an **`id`** (the event’s ID).
 
-![Create node settings](images/create-event-node.png)
 
 > If you see **“Forbidden - perhaps check your credentials? You need to have writer access to this calendar.”**, switch the **Calendar** to your **Primary** calendar or any calendar where you have *Make changes* permission.
 
@@ -45,7 +43,6 @@ You should receive an output with an **`id`** (the event’s ID).
 
 Connect **Create an event ➝ Get an event** and click **Execute step** to fetch the full details.
 
-![Get node settings](images/get-event-node.png)
 
 ---
 
