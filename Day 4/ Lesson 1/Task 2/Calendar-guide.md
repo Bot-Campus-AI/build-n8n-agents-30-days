@@ -53,13 +53,6 @@ Below is the event visible in Google Calendar with title, time and details:
 
 ---
 
-## Import‑ready workflow JSON
-The workflow JSON included in this package is the **original file you provided** (unchanged) named:
-**`calendar Demo workflow.json`**
-
-- Manual Trigger ➝ Create an event ➝ Get an event (ID = `{{$json.id}}` from the create step)
-- “Create” uses `$now` and `$now.plus(1, 'hour')` for start/end.
-
 ## Notes
 - To fetch many events, use **Operation = Get Many**, which doesn’t require Event ID.
 - Adjust time zone or ISO dates in **Workflow settings** if needed.
