@@ -1,93 +1,88 @@
-# 📝 n8n Form + Google Sheets — Daily Activities Logger
+# 📝 n8n Form ➝ Google Sheets — Daily Expense Tracker
 
-This workflow demonstrates how to collect daily activities using an **n8n Form**, process them, and append results to **Google Sheets** for tracking and analysis.
+This workflow lets you **submit expenses via an n8n form** and automatically **append them to a Google Sheet**.  
+You’ll track `Date`, `Item`, `Amount`, and `Category` — then later you can analyze totals and averages.
 
 ---
 
 ## 🔑 Authentication Note
-- **Google Sheets node** requires OAuth2 authentication with Google.  
-- Make sure you have a Google Sheet ready with these columns:  
-  **Date | Activity | Hours Spent | Fun Level (1-10)**  
+- **Form Node:** No auth needed.  
+- **Google Sheets Node:** Requires Google OAuth2 connection (enable Google Sheets API in Google Cloud).
 
 ---
 
 ## ⚙️ Workflow Steps
 
-### 1 ➝ Form Trigger (Collect Activity Input)
-- Drag & drop **Form Trigger** node → rename to **Daily Activity Form**.  
-- Configure form fields:
-  - `date` (Date input)  
-  - `activity` (Text input)  
-  - `hours_spent` (Number input)  
-  - `fun_level` (Dropdown: 1–10)  
+### 1 ➝ Form Node: Collect Expense Data
+- Drag & drop **Form Trigger** node → rename to **Expense Form**.  
+- Configure:
+  - **Fields:**
+    - `date` (Date Picker)  
+    - `item` (Text Input)  
+    - `amount` (Number Input)  
+    - `category` (Dropdown: Food, Entertainment, Education, Transport, Health, Other)  
 
-👉 This will generate a form URL you can share to submit data.
+➡️ This creates a public form URL where you can enter daily expenses.
 
 ---
 
-### 2 ➝ Extract Details
-- Add **Set** node → rename to **Extract Details**.  
-- Connect ➝ `Daily Activity Form ➝ Extract Details`.  
-- **Keep Only Set:** ON.  
+### 2 ➝ Set Node: Clean Data
+- Drag & drop **Set** node → rename to **Clean Expense Data**.  
+- Connect ➝ `Expense Form ➝ Clean Expense Data`.  
+- **Keep Only Set** = ON.  
 - Fields:
-  - `date` = `={{ $json.date }}`  
-  - `activity` = `={{ $json.activity }}`  
-  - `hours_spent` = `={{ $json.hours_spent }}`  
-  - `fun_level` = `={{ $json.fun_level }}`  
+  - `date` = `={{ $json["date"] }}`
+  - `item` = `={{ $json["item"] }}`
+  - `amount` = `={{ parseFloat($json["amount"]) }}`
+  - `category` = `={{ $json["category"] }}`
 
 ---
 
-### 3 ➝ Standardize Data (Set Node)
-- Add another **Set** node → rename to **Standardize Data**.  
-- Connect ➝ `Extract Details ➝ Standardize Data`.  
-- Purpose: ensure consistent formatting before saving.  
-- Fields:
-  - `date` = `={{ new Date($json.date).toLocaleDateString("en-GB") }}`  
-  - `activity` = `={{ $json.activity.trim() }}`  
-  - `hours_spent` = `={{ Number($json.hours_spent) }}`  
-  - `fun_level` = `={{ Number($json.fun_level) }}`  
-
----
-
-### 4 ➝ Google Sheets: Append Data
-- Add **Google Sheets** node → rename to **Append Activity**.  
-- Connect ➝ `Standardize Data ➝ Append Activity`.  
+### 3 ➝ Google Sheets Node: Append Row
+- Drag & drop **Google Sheets** node → rename to **Append to Sheet**.  
+- Connect ➝ `Clean Expense Data ➝ Append to Sheet`.  
 - Configure:
   - **Operation:** `Append`  
-  - **Authentication:** Google OAuth2  
+  - **Authentication:** Google OAuth2 (your account)  
   - **Spreadsheet URL:** link to your Google Sheet  
-  - **Range:** `Sheet1!A:D`  
-- Map columns:
-  - A → Date  
-  - B → Activity  
-  - C → Hours Spent  
-  - D → Fun Level  
+  - **Sheet Name:** e.g., `Expenses`  
+  - **Columns Mapping:**
+    - Date → `{{$json["date"]}}`
+    - Item → `{{$json["item"]}}`
+    - Amount → `{{$json["amount"]}}`
+    - Category → `{{$json["category"]}}`
 
 ---
 
-## 📄 Sample Daily Activities Sheet
+## 📄 Sample Google Sheet
 
-| Date     | Activity      | Hours Spent | Fun Level |
-|----------|---------------|-------------|-----------|
-| Jan 15   | Reading Book  | 2           | 8         |
-| Jan 15   | Gym Workout   | 1.5         | 9         |
-| Jan 15   | Cooking       | 1           | 7         |
-| Jan 16   | Office Work   | 8           | 6         |
-| Jan 16   | Movie Night   | 3           | 10        |
-| Jan 16   | Dinner Party  | 2.5         | 9         |
-| Jan 17   | Cycling       | 1.5         | 8         |
-| Jan 17   | Study Session | 4           | 7         |
-| Jan 17   | Gaming        | 2           | 9         |
-| Jan 18   | Morning Walk  | 1           | 8         |
-| Jan 18   | Coding Project| 6           | 9         |
+| Date    | Item          | Amount | Category      |
+|---------|---------------|--------|---------------|
+| Jan 15  | Lunch         | 12.50  | Food          |
+| Jan 15  | Dinner        | 18.00  | Food          |
+| Jan 15  | Tiffin        | 6.50   | Food          |
+| Jan 16  | Movie Ticket  | 15.00  | Entertainment |
+| Jan 16  | Petrol        | 40.00  | Transport     |
+| Jan 17  | Book          | 8.99   | Education     |
+| Jan 17  | Files & Stationery | 12.75 | Education |
+| Jan 18  | Gym Membership | 25.00 | Health        |
+| Jan 18  | Coffee        | 4.50   | Food          |
+| Jan 18  | Uber Ride     | 10.00  | Transport     |
+
+---
+
+## ✅ How It Works
+- You open the n8n form ➝ fill in Date, Item, Amount, Category.  
+- n8n **cleans the values** with the Set node.  
+- n8n **appends the data** to your Google Sheet in the correct row.  
+- You can later extend the workflow with:
+  - **Function node** ➝ calculate totals, averages.  
+  - **Gmail/Slack node** ➝ send daily/weekly reports.  
 
 ---
 
-## 🎯 What You Can Do Next
-- Calculate **total hours** across all rows.  
-- Calculate **average fun level**.  
-- Build analytics dashboards with Sheets or connect to another tool (Looker Studio, Slack, etc.).
-
-💡 Easy Start: You can copy/paste this table into a new Google Sheet and then use the n8n workflow to append more rows dynamically.
-
----
+## 🎯 Try It Yourself
+1. Create a Google Sheet named `Expenses` with columns `Date | Item | Amount | Category`.  
+2. Import this workflow JSON into n8n.  
+3. Fill the form a few times (Lunch, Movie, Book, Coffee).  
+4. Check your sheet ➝ new rows appear automatically.  
