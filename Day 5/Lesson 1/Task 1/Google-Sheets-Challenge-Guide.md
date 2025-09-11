@@ -38,7 +38,14 @@ You’ll track `Date`, `Item`, `Amount`, and `Category` — then later you can a
 
 ---
 
-### 3 ➝ Google Sheets Node: Append Row
+### 3.1 ➝ Set Node: Clean Data
+    - create a Google sheet Manually 
+    -  copy that url for Ready for pasting it into google sheet Document.
+    -  in Document config set it by URL  paste URL you will get the sheet into playground.
+
+---
+
+### 3.2 ➝ Google Sheets Node: Append Row
 - Drag & drop **Google Sheets** node → rename to **Append to Sheet**.  
 - Connect ➝ `Clean Expense Data ➝ Append to Sheet`.  
 - Configure:
