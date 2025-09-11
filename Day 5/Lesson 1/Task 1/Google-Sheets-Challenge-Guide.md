@@ -38,7 +38,8 @@ You’ll track `Date`, `Item`, `Amount`, and `Category` — then later you can a
 
 ---
 
-### 3.1 ➝ Set Node: Clean Data
+### 3.1 ➝ Creating a Google sheet: Manually
+
     - create a Google sheet Manually 
     -  copy that url for Ready for pasting it into google sheet Document.
     -  in Document config set it by URL  paste URL you will get the sheet into playground.
