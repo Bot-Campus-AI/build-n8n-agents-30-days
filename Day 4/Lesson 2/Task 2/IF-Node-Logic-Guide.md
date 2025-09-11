@@ -1,43 +1,133 @@
-# 📧 IF Node Logic with Urgent Keyword — Demo Workflow
+#  IF Node Logic with Urgent Keyword — Demo Workflow
 
-This demo shows how to classify and act on incoming emails using **IF nodes** for decision-making in n8n.
-
----
-
-## ⚙️ Workflow Overview
-1. **Manual Trigger** → start workflow on demand.
-2. **Email Data** → simulate an incoming email with sender, subject, and body.
-3. **Email Data1** → pass email values forward safely.
-4. **Extract & Clean** → normalize fields (domain, subject lowercase, urgent check, sender name).
-5. **Urgent + Company?** → IF node checks if subject contains "urgent" AND sender domain is company domain.
-6. **Urgent Notification** → marks urgent, builds alert message.
-7. **Company?** → secondary IF, decides if company but not urgent.
-8. **Priority Inbox** → mark company non-urgent.
-9. **Standard Queue** → mark external emails.
-10. **Send Message (Gmail)** → send notification based on category.
+This workflow demonstrates how to classify and act on incoming emails using **IF nodes** in n8n.  
+We’ll build a decision tree that routes **urgent company emails**, **regular company emails**, and **external emails** to different actions.
 
 ---
 
-## 🖼️ Workflow Canvas
+## ⚙️ Workflow Steps
+
+### 1 ➝ Manual Trigger
+- Drag & drop **Manual Trigger** node.  
+- Purpose: start the workflow whenever you run it manually.
+
+---
+
+### 2 ➝ Set Node: Email Data
+- Drag & drop **Set** node → rename to **Email Data**.  
+- Connect ➝ `Manual Trigger ➝ Email Data`.  
+- **Keep Only Set** = ON.  
+- Configure fields:
+  - `sender` → `boss@company.com`  
+  - `subject` → `URGENT: Q4 Report Needed`  
+  - `body` → `Please send the quarterly report by EOD`  
+  - `received_time` → `={{ $now }}`  
+
+---
+
+### 3 ➝ Set Node: Email Data1
+- Add another **Set** node → rename to **Email Data1**.  
+- Connect ➝ `Email Data ➝ Email Data1`.  
+- Purpose: ensure email data is passed safely for the next steps.
+
+---
+
+### 4 ➝ Set Node: Extract & Clean
+- Drag & drop **Set** node → rename to **Extract & Clean**.  
+- Connect ➝ `Email Data1 ➝ Extract & Clean`.  
+- **Keep Only Set** = ON.  
+- Add fields with **expressions**:
+
+| Field           | Expression |
+|-----------------|------------|
+| `sender_domain` | `={{ ($json["sender"] || "").split("@")[1] || "" }}` |
+| `subject_clean` | `={{ ($json["subject"] || "").toLowerCase() }}` |
+| `is_urgent` (Boolean) | `={{ ($json["subject"] || "").toLowerCase().includes("urgent") }}` |
+| `sender_name`   | `={{ ($json["sender"] || "").split("@")[0] || "" }}` |
+
+---
+
+### 5 ➝ IF Node: Urgent + Company?
+- Drag & drop **IF** node → rename to **Urgent + Company?**.  
+- Connect ➝ `Extract & Clean ➝ Urgent + Company?`.  
+- Configure conditions (use **AND** logic):
+  - Boolean: `={{ $json.is_urgent }} == true`  
+  - String: `={{ $json.sender_domain }} == "company.com"`  
+
+**True path** ➝ urgent company emails.  
+**False path** ➝ everything else.
+
+---
+
+### 6 ➝ Set Node: Urgent Notification
+- For **true branch** of “Urgent + Company?” add **Set** node → rename to **Urgent Notification**.  
+- Fields:
+  - `category` = `urgent`  
+  - `action` = `immediate_notification`  
+  - `message` =  
+    ```js
+    ={{ "🚨 URGENT: Email from " + ($json.sender_name || "unknown") + " - " + ($json.subject || "(no subject)") }}
+    ```
+
+---
+
+### 7 ➝ Gmail Node: Send Urgent Message
+- Add **Gmail** node → rename to **Send a message**.  
+- Connect ➝ `Urgent Notification ➝ Send a message`.  
+- Configure:
+  - **To:** `team@company.com`  
+  - **Subject:** `🚨 URGENT: {{$json.subject}}`  
+  - **Body:** short notification with `$json.message`.
+
+---
+
+### 8 ➝ IF Node: Company?
+- For **false branch** of “Urgent + Company?” add **IF** node → rename to **Company?**.  
+- Condition:  
+  - String: `={{ $json.sender_domain }} == "company.com"`
+
+---
+
+### 9 ➝ Priority Inbox (Company non-urgent)
+- For **true branch** of “Company?” add **Set** node → rename to **Priority Inbox**.  
+- Fields:
+  - `category` = `company_priority`  
+  - `action` = `add_to_priority_inbox`  
+  - `message` =  
+    ```js
+    ={{ "⚠️ Company email from " + $json.sender_name + " - " + $json.subject }}
+    ```  
+- Connect to **Gmail node → Send a message1** to notify team.
+
+---
+
+### 10 ➝ Standard Queue (External email)
+- For **false branch** of “Company?” add **Set** node → rename to **Standard Queue**.  
+- Fields:
+  - `category` = `external`  
+  - `action` = `standard_processing`  
+  - `message` =  
+    ```js
+    ={{ "📧 External email from " + $json.sender_name + " - " + $json.subject }}
+    ```  
+- Connect to **No Operation** node → do nothing.
+
+---
+
+##  Workflow Canvas
+![Email Output](images/email-output.png)
+
+
+---
+
+##  Example Email Output
+The Gmail node sends structured mail like this:
+
 ![Workflow Graph](images/workflow-graph.png)
 
 ---
 
-## 📩 Email Output Example
-When the workflow runs, Gmail node sends structured mail like this:
-
-![Email Output](images/email-output.png)
-
----
-
-## ✅ Decision Paths
-- 🚨 **Urgent + Company** → Immediate notification
-- ⚠️ **Company only** → Priority inbox
-- 📧 **External** → Standard queue (no operation)
-
----
-
-## 📂 Files Included
-- `IF Node Logic with Urgent keyword Demo (1).json` — workflow file importable into n8n
-- `IF-Node-Logic-Guide.md` — this guide
-- `images/` — screenshots for workflow + email output
+##  Decision Paths
+- 🚨 **Urgent + Company** → Immediate notification email  
+- ⚠️ **Company (not urgent)** → Priority inbox  
+- 📧 **External** → Standard queue (no action)
