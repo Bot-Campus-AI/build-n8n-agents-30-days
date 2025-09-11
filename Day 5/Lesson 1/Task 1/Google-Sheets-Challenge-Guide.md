@@ -1,98 +1,93 @@
-# 📊 n8n Google Sheets Form Workflow — Daily Activities Logger
+# 📝 n8n Form + Google Sheets — Daily Activities Logger
 
-This workflow demonstrates how to collect data via an **n8n Form**, extract details, and append them into a **Google Sheet** for analysis.
+This workflow demonstrates how to collect daily activities using an **n8n Form**, process them, and append results to **Google Sheets** for tracking and analysis.
 
 ---
 
 ## 🔑 Authentication Note
-- The **Google Sheets** node requires **Google OAuth2 credentials** in n8n.  
-- Ensure your Google Sheet is created with columns:  
-  - **Date | Activity | Hours Spent | Fun Level (1-10)**
+- **Google Sheets node** requires OAuth2 authentication with Google.  
+- Make sure you have a Google Sheet ready with these columns:  
+  **Date | Activity | Hours Spent | Fun Level (1-10)**  
 
 ---
 
 ## ⚙️ Workflow Steps
 
-### 1 ➝ Form Node: Collect Daily Activity
-- Drag & drop **Form** node → rename to **Daily Activity Form**.  
-- Connect ➝ `Manual Trigger ➝ Daily Activity Form` (optional: skip trigger if form auto-generates link).  
-- Configure fields:
-  - `date` → Date Picker  
-  - `activity` → Text Input  
-  - `hours` → Number Input  
-  - `fun_level` → Dropdown (1–10)  
+### 1 ➝ Form Trigger (Collect Activity Input)
+- Drag & drop **Form Trigger** node → rename to **Daily Activity Form**.  
+- Configure form fields:
+  - `date` (Date input)  
+  - `activity` (Text input)  
+  - `hours_spent` (Number input)  
+  - `fun_level` (Dropdown: 1–10)  
 
-📄 **Example Form Fields**  
-- Date: `2025-09-11`  
-- Activity: `Morning Jog`  
-- Hours Spent: `1.5`  
-- Fun Level: `8`
+👉 This will generate a form URL you can share to submit data.
 
 ---
 
 ### 2 ➝ Extract Details
-- Drag & drop **Set** node → rename to **Extract Details**.  
+- Add **Set** node → rename to **Extract Details**.  
 - Connect ➝ `Daily Activity Form ➝ Extract Details`.  
-- **Keep Only Set** = ON.  
+- **Keep Only Set:** ON.  
 - Fields:
-  - `date` = `={{ $json["date"] }}`  
-  - `activity` = `={{ $json["activity"] }}`  
-  - `hours` = `={{ $json["hours"] }}`  
-  - `fun_level` = `={{ $json["fun_level"] }}`  
+  - `date` = `={{ $json.date }}`  
+  - `activity` = `={{ $json.activity }}`  
+  - `hours_spent` = `={{ $json.hours_spent }}`  
+  - `fun_level` = `={{ $json.fun_level }}`  
 
 ---
 
-### 3 ➝ Set Node: Format Data
-- Drag & drop **Set** node → rename to **Format Data**.  
-- Connect ➝ `Extract Details ➝ Format Data`.  
-- Purpose: ensure values are clean before appending.  
+### 3 ➝ Standardize Data (Set Node)
+- Add another **Set** node → rename to **Standardize Data**.  
+- Connect ➝ `Extract Details ➝ Standardize Data`.  
+- Purpose: ensure consistent formatting before saving.  
 - Fields:
-  - `Date` = `={{ $json["date"] }}`  
-  - `Activity` = `={{ $json["activity"] }}`  
-  - `Hours Spent` = `={{ parseFloat($json["hours"]) }}`  
-  - `Fun Level` = `={{ parseInt($json["fun_level"]) }}`  
+  - `date` = `={{ new Date($json.date).toLocaleDateString("en-GB") }}`  
+  - `activity` = `={{ $json.activity.trim() }}`  
+  - `hours_spent` = `={{ Number($json.hours_spent) }}`  
+  - `fun_level` = `={{ Number($json.fun_level) }}`  
 
 ---
 
-### 4 ➝ Google Sheets Node: Append to Sheet
-- Drag & drop **Google Sheets** node → rename to **Append Activity**.  
-- Connect ➝ `Format Data ➝ Append Activity`.  
+### 4 ➝ Google Sheets: Append Data
+- Add **Google Sheets** node → rename to **Append Activity**.  
+- Connect ➝ `Standardize Data ➝ Append Activity`.  
 - Configure:
   - **Operation:** `Append`  
-  - **Authentication:** Google OAuth2 (your account)  
-  - **Spreadsheet URL:** paste your Google Sheet link  
-  - **Range:** select `Sheet1!A:D`  
-  - **Values:** map fields from `Format Data` → (Date, Activity, Hours Spent, Fun Level)  
+  - **Authentication:** Google OAuth2  
+  - **Spreadsheet URL:** link to your Google Sheet  
+  - **Range:** `Sheet1!A:D`  
+- Map columns:
+  - A → Date  
+  - B → Activity  
+  - C → Hours Spent  
+  - D → Fun Level  
 
 ---
 
-## 📄 Sample Google Sheet
-After running the workflow, your Google Sheet might look like this:
+## 📄 Sample Daily Activities Sheet
 
-| Date       | Activity       | Hours Spent | Fun Level |
-|------------|----------------|-------------|-----------|
-| 2025-09-11 | Morning Jog    | 1.5         | 8         |
-| 2025-09-11 | Work Project   | 6           | 7         |
-| 2025-09-11 | Dinner w/Family| 2           | 9         |
-| 2025-09-12 | Reading Book   | 1           | 6         |
-| 2025-09-12 | Movie Night    | 2.5         | 10        |
-
----
-
-## 🧮 Next Step: Simple Analytics
-You can later add a **Function node** to calculate:
-- Total Hours in a Day → `sum(hours)`  
-- Average Fun Level → `avg(fun_level)`  
-
-Or use **Google Sheets formulas** to compute directly inside the sheet.
+| Date     | Activity      | Hours Spent | Fun Level |
+|----------|---------------|-------------|-----------|
+| Jan 15   | Reading Book  | 2           | 8         |
+| Jan 15   | Gym Workout   | 1.5         | 9         |
+| Jan 15   | Cooking       | 1           | 7         |
+| Jan 16   | Office Work   | 8           | 6         |
+| Jan 16   | Movie Night   | 3           | 10        |
+| Jan 16   | Dinner Party  | 2.5         | 9         |
+| Jan 17   | Cycling       | 1.5         | 8         |
+| Jan 17   | Study Session | 4           | 7         |
+| Jan 17   | Gaming        | 2           | 9         |
+| Jan 18   | Morning Walk  | 1           | 8         |
+| Jan 18   | Coding Project| 6           | 9         |
 
 ---
 
-## ✅ Try It Yourself
-1. Create a Google Sheet with columns: Date, Activity, Hours Spent, Fun Level.  
-2. Import this workflow into n8n.  
-3. Submit entries through the **n8n Form link**.  
-4. Verify new rows are added to your sheet.  
-5. Expand workflow with a Function/Gmail node to send yourself daily reports.
+## 🎯 What You Can Do Next
+- Calculate **total hours** across all rows.  
+- Calculate **average fun level**.  
+- Build analytics dashboards with Sheets or connect to another tool (Looker Studio, Slack, etc.).
+
+💡 Easy Start: You can copy/paste this table into a new Google Sheet and then use the n8n workflow to append more rows dynamically.
 
 ---
