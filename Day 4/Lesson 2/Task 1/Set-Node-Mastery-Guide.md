@@ -1,18 +1,18 @@
-# 🧰 n8n — Set Node Mastery: Transform, clean, and enhance
-**Real-world example:** Clean a contact-form submission before saving/sending.
+#  n8n — Set Node Mastery: Transform, clean, and enhance
+
 
 > **Auth note:** Set nodes need no auth. If you later add Google Sheets/Gmail, set up Google OAuth2 in n8n (Sheets/Gmail scope).
 
 ---
 
-## 🎯 Goal
+##  Goal
 Take messy contact-form data (name, email, phone, message), **normalize & validate it** with a Set node, then route only **valid** items forward.
 
 **Flow:** `Manual Trigger ➝ Set (Sample Input) ➝ Set (Clean & Enhance) ➝ IF (Valid?)`
 
 ---
 
-## 🛠️ Step-by-step
+##  Step-by-step
 
 ### 1) Manual Trigger — run anytime
 - Drag **Manual Trigger** onto the canvas. No settings needed.
@@ -128,14 +128,14 @@ Run **Execute node** to emit this test item.
 
 ---
 
-## 🧪 Quick test
+## Quick test
 1. Execute the workflow.  
 2. Inspect the **Clean & Enhance** output: normalized name/email/phone, flags, tags.  
 3. Flip the input values (bad email/short phone) and confirm **IF** routing changes.
 
 ---
 
-## 📚 Expression quick-reference
+##  Expression quick-reference
 - Trim & lower: `={{ ($json.email || '').trim().toLowerCase() }}`  
 - Title-case: `={{ $json.fullName.toLowerCase().split(/\s+/).map(s=>s[0].toUpperCase()+s.slice(1)).join(' ') }}`  
 - Digits only: `={{ ($json.phone || '').replace(/\D/g,'') }}`  
