@@ -5,7 +5,7 @@ We’ll build a decision tree that routes **urgent company emails**, **regular c
 
 ---
 
-## ⚙️ Workflow Steps
+##  Workflow Steps
 
 ### 1 ➝ Manual Trigger
 - Drag & drop **Manual Trigger** node.  
