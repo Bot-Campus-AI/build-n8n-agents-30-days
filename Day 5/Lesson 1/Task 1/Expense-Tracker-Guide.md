@@ -1,24 +1,15 @@
-# 📊 Expense Tracker (n8n Form ➝ Google Sheets ➝ Average Spend)
+# Google sheets Expense Tracker (n8n Form ➝ Google Sheets ➝ Average Spend)
 
 Real-world workflow that collects expenses through an **n8n Form**, appends each entry to **Google Sheets**, reads all rows back, and calculates **Total Spend** and **Average Spend**.
 
 **Flow:**  
 `Expense Form ➝ Clean Expense Data ➝ Append to Sheets ➝ Read All Rows ➝ Code (totals) ➝ Filtering (final output)`
 
----
 
-## 🗂 Repo Contents
-
-- `My workflow 7.json` → import-ready n8n workflow  
-- `Expense-Tracker-Guide.md` → step-by-step build guide with screenshots  
-- `images/`
-  - `workflow-canvas.png` → full canvas view  
-  - `sheet-record.png` → sample Google Sheet  
-  - `output-average.png` → example totals/average output
 
 ---
 
-## 🔑 Authentication & Prereqs
+##  Authentication & Prereqs
 
 - Connect **Google Sheets** in n8n using **OAuth2** (Google Cloud → enable Sheets API).  
 - Create a Google Sheet named anything (e.g., `Expenses`) with **exact** headers:
@@ -31,7 +22,7 @@ Date | Item | Amount | Category
 
 ---
 
-## ⚙️ Build Steps (Drag • Configure • Map)
+##  Build Steps (Drag • Configure • Map)
 
 ### 1 ➝ Form Trigger — “Expense Form”
 - Drag **Form Trigger** onto the canvas.  
@@ -57,6 +48,10 @@ Date | Item | Amount | Category
 > If you must store currency with symbol, you can set `Amount` to `=₹{{$json.Amount}}`.  
 > The Code node below already strips symbols safely during math.
 
+## sample google sheet
+
+- Sample Google Sheet  
+  ![Sheet](images/sheet-record.png)
 ---
 
 ### 3 ➝ Google Sheets — “Expenses” (Append)
@@ -124,13 +119,16 @@ You’ll see a table like:
 
 ---
 
-## 📸 Screenshots (for quick orientation)
+## Workfolw Canvas 
 
 - Workflow canvas  
   ![Canvas](images/workflow-canvas.png)
 
-- Sample Google Sheet  
-  ![Sheet](images/sheet-record.png)
+
+
+---
+
+## output
 
 - Output (totals & average)  
   ![Output](images/output-average.png)
@@ -146,7 +144,7 @@ You’ll see a table like:
 
 ---
 
-## 🔍 Troubleshooting
+##  Troubleshooting
 
 - **Wrong/empty math:**  
   - Check sheet headers exactly: `Date | Item | Amount | Category` (no trailing spaces/tabs).  
@@ -158,30 +156,7 @@ You’ll see a table like:
 - **OAuth / Permission errors:**  
   - Reconnect Google Sheets OAuth2 and ensure your user can edit the sheet.
 
----
-
-## ➕ Extensions (optional)
-
-- Send a daily email report via **Gmail** node:  
-  **Subject:** `📊 Daily Expense Report`  
-  **HTML Body:**  
-  ```html
-  <h3>Expense Summary</h3>
-  <p><b>Total:</b> ₹{{$json.totalSpent}}</p>
-  <p><b>Entries:</b> {{$json.rowCount}}</p>
-  <p><b>Average:</b> ₹{{$json.averageSpend}}</p>
-  ```
-
-- Add another Code/Function to group by category and output totals.
 
 ---
 
-## 📥 Import the Workflow
 
-1. In n8n, click **Import from File**.  
-2. Select `My workflow 7.json`.  
-3. Open the **Expense Form** node → get the form URL.  
-4. Open each **Google Sheets** node → set your sheet URL & tab (if different).  
-5. Execute and verify outputs.
-
----
