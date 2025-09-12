@@ -11,18 +11,11 @@
 ---
 
 ## Deliverables
-- `workflow_error.json` — intentionally broken Google Sheets append (to demonstrate failure).
-- `workflow_error_handled.json` — captures the error, creates a new Sheet, then appends successfully.
+-  — intentionally broken Google Sheets append (to demonstrate failure).
+-  — captures the error, creates a new Sheet, then appends successfully.
 
 ---
 
-## How to Import
-1. n8n ➝ **Workflows** ➝ **Import from File/Clipboard**.
-2. Paste the JSON from `workflow_error.json` ➝ Import.
-3. Repeat for `workflow_error_handled.json`.
-4. Open each **Google Sheets** node ➝ choose your **Google OAuth2** credential.
-
----
 
 ## Walkthrough
 
