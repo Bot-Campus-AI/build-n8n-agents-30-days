@@ -1,4 +1,4 @@
-# Example B — Daily KPI at **09:00 IST** → Google Sheets (n8n)
+#  Cron Trigger Daily KPI at **09:00 IST** → Google Sheets (n8n)
 
 **Flow:**  
 **Schedule Trigger (09:00 IST)** → **Function (Build Row)** → **Google Sheets (Append Row)**
@@ -30,7 +30,7 @@
 - **Timezone** → **Asia/Kolkata**  
 **2.3** Rename node → **Schedule (Daily 09:00 IST)**
 
-> 🕘 Fires once per day at **09:00 IST**.
+>  Fires once per day at **09:00 IST**.
 
 ---
 
@@ -77,13 +77,6 @@ return [{
 **5.1** Click **Execute Workflow** → confirm a new row appears in your Sheet  
 **5.2** Toggle **Activate** (top-right) → runs daily at **09:00 IST**
 
----
-
-## (Optional) Bulletproof error handling
-**Pattern:**  
-`Google Sheets (Continue On Fail = ON)` → **IF** (`{{$json.error}}` is **empty?**)  
-- **TRUE →** OK path  
-- **FALSE →** Recover path (e.g., **Wait** 10s → **retry**, or **send alert**)
 
 ---
 
@@ -94,81 +87,3 @@ return [{
 - **Range not found** → confirm `Sheet1` exists and range is `Sheet1!A:D`.  
 - **Headers missing** → add `date_ist | signups | revenue_inr | note` to row 1.
 
----
-
-## 📥 Import-ready workflow JSON
-Paste via **Workflows → Import from file/clipboard**.  
-After import, open the **Google Sheets** node: select your credential and **replace** `REPLACE_WITH_YOUR_SPREADSHEET_ID`.
-
-```json
-{
-  "name": "Daily KPI Log (09:00 IST) → Google Sheets",
-  "nodes": [
-    {
-      "parameters": {
-        "mode": "specific",
-        "triggerTimes": {
-          "item": [
-            { "hour": 9, "minute": 0 }
-          ]
-        },
-        "timezone": "Asia/Kolkata"
-      },
-      "name": "Schedule (Daily 09:00 IST)",
-      "type": "n8n-nodes-base.cron",
-      "typeVersion": 1,
-      "position": [200, 280],
-      "id": "ScheduleDaily"
-    },
-    {
-      "parameters": {
-        "functionCode": "const now = Date.now();\nconst istIso = new Date(now + 19800000).toISOString(); // UTC+5:30 (IST)\n// Replace these demo values with real KPIs later\nreturn [{ json: {\n  date_ist: istIso.slice(0,10),\n  signups: 12,\n  revenue_inr: 34990,\n  note: 'Daily KPI log'\n}}];"
-      },
-      "name": "Build Row",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 2,
-      "position": [460, 280],
-      "id": "FnRow"
-    },
-    {
-      "parameters": {
-        "operation": "append",
-        "documentId": "REPLACE_WITH_YOUR_SPREADSHEET_ID",
-        "range": "Sheet1!A:D",
-        "options": {
-          "valueInputMode": "RAW"
-        }
-      },
-      "name": "Google Sheets - Append Row",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 6,
-      "position": [720, 280],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "",
-          "name": ""
-        }
-      },
-      "id": "AppendRow"
-    }
-  ],
-  "connections": {
-    "Schedule (Daily 09:00 IST)": {
-      "main": [
-        [
-          { "node": "Build Row", "type": "main", "index": 0 }
-        ]
-      ]
-    },
-    "Build Row": {
-      "main": [
-        [
-          { "node": "Google Sheets - Append Row", "type": "main", "index": 0 }
-        ]
-      ]
-    }
-  },
-  "active": false,
-  "version": 2
-}
-```
