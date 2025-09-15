@@ -202,6 +202,9 @@ Add **Gmail** (or **Email Send**) node.
 3. If the LLM returns under a different field (e.g., `choices[0].message.content`), the **provider‑agnostic extractor** in the Set node already handles that.
 
 ---
+![Gmail: Weekly report delivered with Google Doc attachment](./images/emailBox.png)
+
+---
 
 ## That’s it!
 Turn the workflow **Active** once you like the output. Your market brief will now arrive every Friday at 4 PM 🎉.
