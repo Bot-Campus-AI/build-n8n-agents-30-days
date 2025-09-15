@@ -1,6 +1,6 @@
 # Weekly Market Intelligence — n8n Guide (Cron → RSS → LLM → Email)
 
-This guide is **copy‑pasteable** and **provider‑agnostic**. Follow it top‑to‑bottom once to build an automated weekly market brief that:
+Follow it top‑to‑bottom once to build an automated weekly market brief that:
 **(1) pulls new stock‑market articles → (2) summarizes with your LLM → (3) emails a beautiful HTML report.**
 
 ---
