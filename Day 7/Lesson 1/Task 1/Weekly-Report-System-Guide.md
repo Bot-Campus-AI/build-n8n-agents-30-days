@@ -17,7 +17,6 @@ Automates weekly team updates from **Airtable** into a concise executive email v
 Open: <https://airtable.com/>  
 Click **Sign up / Log in → Continue with Google** → choose your account.
 
-![Airtable dashboard](./images/airtable-01-dashboard.png)
 
 ### 0.2 Create the Base & “Updates” Table
 **Goal:** a simple team “inbox” for weekly bullets.
@@ -36,7 +35,7 @@ Click **Sign up / Log in → Continue with Google** → choose your account.
 **Views** → **+ Create → Form** → include fields (Team, Update, KPI's, Links) → **Share form** → copy link → share with team.  
 *Tip:* Add 3–4 weeks of sample entries so you can test week‑over‑week behavior.
 
-![Create base & table](./images/airtable-02-create-base.png)
+
 
 ### 0.3 Create a Personal Access Token (PAT)
 You’ll use this token in n8n to read/write Airtable.
@@ -51,7 +50,7 @@ You’ll use this token in n8n to read/write Airtable.
 5) **Access** → *Add a base* → select **Weekly Report Inbox**  
 6) **Create token** → **Copy it** (store securely).
 
-![Create personal access token](./images/airtable-03-create-token.png)
+
 
 ### 0.4 (Optional) Know your IDs
 When you open a grid view, URL looks like:  
@@ -98,6 +97,9 @@ return rows.map(r => ({ json: { Team: r.Team, Update: r.Update, "KPI's": r.Kpis,
   - **Update**: `={{ $json.Update }}`  
   - **KPI's**: `={{ $json["KPI's"] }}`  
   - **Links**: `={{ $json.Links }}`
+  - 
+---
+![Create personal access token](./images/airtable-03-create-token.png)
 
 ### Step 4 — Airtable: Get record
 - **Node:** Airtable → **Get**  
@@ -116,6 +118,17 @@ This brings back `createdTime` etc. that we’ll pass to the LLM.
 - **To:** your address  
 - **Subject:** `Weekly Report — {{$now.format("MMM Do, YYYY")}}`  
 - **Message:** map the LLM output (already wired in JSON).
+
+---
+
+
+![Airtable dashboard](./images/airtable-01-dashboard.png)
+
+
+---
+
+
+![Create base & table](./images/airtable-02-create-base.png)
 
 ---
 
