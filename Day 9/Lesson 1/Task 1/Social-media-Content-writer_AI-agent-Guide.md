@@ -1,14 +1,6 @@
 # Social‑Media Content Writer AI Agent (n8n) — **OpenRouter Chat Model**
 > Generates LinkedIn, Facebook, and Instagram articles from a single prompt, logs them to Google Sheets, and emails an HTML bundle.
 
-![Workflow canvas](images/canvas.png)
-*Figure — Workflow canvas.*
-
-![HTML email preview](images/email-preview.png)
-*Figure — HTML email preview.*
-
-![Google Sheets rows](images/sheet-rows.png)
-*Figure — Google Sheets rows.*
 
 ---
 
@@ -21,6 +13,12 @@
 
 ## Power Pattern: **Input → Process → Output**
 **Prompt Here! (Chat Trigger)** ➝ **AI Agent** *(System Prompt)* + **OpenRouter Chat Model** + **Simple Memory** ➝ **Code in JavaScript** *(split to LinkedIn/Facebook/Instagram)* ➝ **Merge (combineAll)** ➝ **Google Sheets: Append** ➝ **Gmail: Send a message (HTML)**.
+
+---
+## Figure — Workflow canvas
+
+![Workflow canvas](images/canvas.png)
+
 
 ---
 
@@ -68,12 +66,22 @@ const out=[];for(const item of items){const j=item.json||{};const ID=pickId(j);l
   - `LinkedIN` → `={{ $json.LinkedIn }}`
   - `Facebook` → `={{ $json.Facebook }}`
   - `Instagram` → `={{ $json.Instagram }}`
+---
+## sheet pic 
+
+![Google Sheets rows](images/sheet-rows.png)
+*Figure — Google Sheets rows.*
 
 ### 8) Gmail — Send a message (HTML)
 - **To:** `jashwanthboddupally@gmail.com, support@botcampus.ai`
 - **Subject:** `AGENTIC AI  - CONTENT WRITER For Social media`
 - **Email Type:** HTML
 - **Message:** Use the HTML template that injects `{{$json.LinkedIN}}`, `{{$json.Facebook}}`, `{{$json.Instagram}}` into three blocks.
+
+---
+## output
+![HTML email preview](images/email-preview.png)
+*Figure — HTML email preview.*
 
 ---
 
