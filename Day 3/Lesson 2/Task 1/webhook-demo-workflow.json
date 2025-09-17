@@ -1,122 +1,84 @@
 {
-  "name": "Webhook Listener \u2014 Basic Age Check",
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "listen/basic",
-        "responseMode": "lastNode"
+        "path": "115748c5-1ffe-4adc-bd4a-4261799ec6ad",
+        "options": {}
       },
-      "id": "1",
-      "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
+      "typeVersion": 2.1,
       "position": [
-        250,
-        300
-      ]
+        -816,
+        176
+      ],
+      "id": "2ea626d3-8d3f-4ef3-997d-ab6543909e3a",
+      "name": "Webhook",
+      "webhookId": "115748c5-1ffe-4adc-bd4a-4261799ec6ad"
     },
     {
       "parameters": {
         "conditions": {
-          "number": [
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
             {
-              "value1": "={{$json[\"age\"]}}",
-              "operation": "largerEqual",
-              "value2": "={{18}}"
+              "id": "15c35ca1-e4e5-4212-ab0c-87eec34b5565",
+              "leftValue": "={{ $json.age }}",
+              "rightValue": "={{ 18 }}",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
             }
-          ]
-        }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
-      "id": "2",
-      "name": "If (age >= 18 ?)",
       "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
+      "typeVersion": 2.2,
       "position": [
-        470,
-        300
-      ]
+        -496,
+        176
+      ],
+      "id": "cd992ab2-5512-4059-954f-88ca2a875786",
+      "name": "If Age >= 18"
     },
     {
       "parameters": {
-        "values": {
-          "string": [
-            {
-              "name": "message",
-              "value": "\u2705 Adult \u2014 access permitted"
-            }
-          ],
-          "number": [
-            {
-              "name": "age",
-              "value": "={{$json[\"age\"]}}"
-            }
-          ],
-          "string:1": [
-            {
-              "name": "received_name",
-              "value": "={{$json[\"name\"]}}"
-            }
-          ]
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 404
         }
       },
-      "id": "3",
-      "name": "Set (Adult)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
       "position": [
-        690,
-        220
-      ]
+        -16,
+        352
+      ],
+      "id": "8f849698-d704-4a8a-9a79-450625d662b3",
+      "name": "Fail"
     },
     {
       "parameters": {
-        "values": {
-          "string": [
-            {
-              "name": "message",
-              "value": "\ud83d\udfe1 Minor \u2014 access limited"
-            }
-          ],
-          "number": [
-            {
-              "name": "age",
-              "value": "={{$json[\"age\"]}}"
-            }
-          ],
-          "string:1": [
-            {
-              "name": "received_name",
-              "value": "={{$json[\"name\"]}}"
-            }
-          ]
-        }
-      },
-      "id": "4",
-      "name": "Set (Minor)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 1,
-      "position": [
-        690,
-        380
-      ]
-    },
-    {
-      "parameters": {
-        "responseMode": "lastNode",
-        "responseData": "={{$json}}",
+        "respondWith": "allIncomingItems",
         "options": {
           "responseCode": 200
         }
       },
-      "id": "5",
-      "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
+      "typeVersion": 1.4,
       "position": [
-        920,
-        300
-      ]
+        -32,
+        16
+      ],
+      "id": "9f2749b8-75f1-4907-87cb-89c7a401a50e",
+      "name": "True"
     }
   ],
   "connections": {
@@ -124,47 +86,25 @@
       "main": [
         [
           {
-            "node": "If (age >= 18 ?)",
+            "node": "If Age >= 18",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "If (age >= 18 ?)": {
+    "If Age >= 18": {
       "main": [
         [
           {
-            "node": "Set (Adult)",
+            "node": "True",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Set (Minor)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set (Adult)": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set (Minor)": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
+            "node": "Fail",
             "type": "main",
             "index": 0
           }
@@ -172,6 +112,15 @@
       ]
     }
   },
-  "active": false,
-  "settings": {}
+  "pinData": {
+    "Webhook": [
+      {
+        "name": "Jashu",
+        "age": 12
+      }
+    ]
+  },
+  "meta": {
+    "instanceId": "42d13b6d7987a10c8e2c8db41171b42d509e245ebab6f50c51434763260454f5"
+  }
 }
