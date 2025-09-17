@@ -35,19 +35,7 @@ Make n8n receive HTTP requests from the outside world using a **Webhook**:
 
 **Meaning:** If `age >= 18` → **True**, else → **False**.
 
----
 
-### 3️ Add Set nodes for clear messages (optional but helpful)
-- **True branch** (from If’s green output):
-  - Add **Set** → field:
-    ```json
-    { "message": " Adult — access permitted", "received_name": "={{$json["name"]}}", "age": "={{$json["age"]}}" }
-    ```
-- **False branch** (from If’s red output):
-  - Add **Set** → field:
-    ```json
-    { "message": " Minor — access limited", "received_name": "={{$json["name"]}}", "age": "={{$json["age"]}}" }
-    ```
 
 ---
 
