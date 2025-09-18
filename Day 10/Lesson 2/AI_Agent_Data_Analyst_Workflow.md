@@ -7,7 +7,6 @@ This package contains a complete, **copy‑pasteable** guide to build the workfl
 - Render a **line chart** with QuickChart
 - Email an HTML report with Gmail
 
-> All code and the system prompt are included **below in this README** (no separate files).
 
 ---
 
@@ -15,7 +14,7 @@ This package contains a complete, **copy‑pasteable** guide to build the workfl
 - `workflow.json` — importable n8n workflow (update credentials/IDs)
 - `images/` — screenshots used in this guide
 
-![Workflow overview](images/Screenshot 2025-09-18 125756.png)
+![Workflow overview](Day 10/Lesson 2/images/Screenshot 2025-09-18 125543.png)
 
 ---
 
