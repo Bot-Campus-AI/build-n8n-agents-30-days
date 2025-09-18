@@ -1,0 +1,159 @@
+{
+  "name": "Drive CSV \u2192 Parse \u2192 Gemini \u2192 Gmail",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerOn": "fileCreated",
+        "folderId": ""
+      },
+      "id": "Google Drive Trigger",
+      "name": "Google Drive Trigger",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 2,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": "={{ $json[\"id\"] }}",
+        "binaryPropertyName": "data"
+      },
+      "id": "Download file",
+      "name": "Download file",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "extract",
+        "binaryPropertyName": "data",
+        "fileFormat": "auto"
+      },
+      "id": "Extract From File",
+      "name": "Extract From File",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        820,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "language": "JavaScript",
+        "jsCode": "const rows = items.map(i => i.json);const rowCount = rows.length;if (rowCount===0){return [{json:{summaryContext:'No rows found.',columns:[],rowCount:0}}];}const columns=Object.keys(rows[0]);const numericCols=columns.filter(c=>rows.every(r=>r[c]==null||r[c]===''||!isNaN(Number(r[c]))));const stats={};for (const c of numericCols){const nums=rows.map(r=>Number(r[c])).filter(v=>!isNaN(v));if(nums.length){const sum=nums.reduce((a,b)=>a+b,0);stats[c]={count:nums.length,min:Math.min(...nums),max:Math.max(...nums),mean:Number((sum/nums.length).toFixed(2))};}}const sample=rows.slice(0,10);const summaryContext={meta:{rowCount,columns,numericColumns:numericCols},quickStats:stats,sampleRows:sample};return [{json:{columns,rowCount,summaryContext:JSON.stringify(summaryContext,null,2)}}];"
+      },
+      "id": "Code in JavaScript",
+      "name": "Code in JavaScript",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "plain",
+        "prompt": "You are a precise data analyst. Produce a compact, Gmail-friendly HTML summary of a CSV dataset.\\n\\nHARD RULES\\n- DO NOT include a \u201cColumns and Data Types\u201d (or any schema) section.\\n- Sections must be exactly, in this order: Overview, Key Metrics, Notable Insights, Next Steps.\\n- Use only inline styles. Neutral grays only (#111 text, #555 muted, #e5e7eb borders). No external CSS/JS.\\n- Keep output under ~250 words. No apologies or meta commentary.\\n\\nINPUT\\nThe variable {{ $json.summaryContext }} is a JSON string containing:\\n- meta.rowCount, meta.columns, meta.numericColumns\\n- quickStats: for each numeric column \u2192 {count, min, max, mean}\\n- sampleRows: up to 10 example rows\\n\\nWHAT TO WRITE\\n1) Overview...\\n2) Key Metrics...\\n3) Notable Insights...\\n4) Next Steps...\\n\\nOUTPUT (return only this single HTML block; no <html> or <body> tags):\\n<div style=\\\"font-family:Arial,Helvetica,sans-serif;color:#111;line-height:1.6;font-size:14px;\\\">\\n  <h3 style=\\\"margin:0 0 8px 0;color:#111;\\\">Overview</h3>\\n  <h3 style=\\\"margin:16px 0 8px 0;color:#111;\\\">Key Metrics</h3>\\n  <h3 style=\\\"margin:16px 0 8px 0;color:#111;\\\">Notable Insights</h3>\\n  <ul style=\\\"margin:0 0 12px 18px;padding:0;\\\"></ul>\\n  <h3 style=\\\"margin:16px 0 8px 0;color:#111;\\\">Next Steps</h3>\\n  <ul style=\\\"margin:0;padding:0 0 4px 18px;\\\"></ul>\\n</div>"
+      },
+      "id": "Gemini LLM",
+      "name": "Gemini LLM",
+      "type": "n8n-nodes-base.llmChain",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "toList": [
+          "you@example.com"
+        ],
+        "subject": "={{ \"CSV Summary \u2014 \" + $json.rowCount + \" rows\" }}",
+        "message": "={{ $json.text }}",
+        "options": {
+          "sendAsHtml": true
+        }
+      },
+      "id": "Send a message",
+      "name": "Send a message",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 3,
+      "position": [
+        1600,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract From File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract From File": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Gemini LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini LLM": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
