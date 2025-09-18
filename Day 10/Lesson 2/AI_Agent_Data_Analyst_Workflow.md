@@ -10,14 +10,6 @@ This package contains a complete, **copy‑pasteable** guide to build the workfl
 
 ---
 
-## 📦 Files
-- `workflow.json` — importable n8n workflow (update credentials/IDs)
-- `images/` — screenshots used in this guide
-
-![Workflow overview](Day 10/Lesson 2/images/Screenshot 2025-09-18 125543.png)
-
----
-
 ## ✅ Prerequisites
 - n8n server
 - Credentials:
@@ -37,9 +29,9 @@ This package contains a complete, **copy‑pasteable** guide to build the workfl
 7. **Code (JavaScript)** — *Email body + Line Chart*
 8. **Gmail** — *Send a message*
 
-![Data prep output](images/Screenshot 2025-09-18 125543.png)
-![Email result](images[Screenshot 2025-09-18 125812.png])
-
+---
+## Canvas WorkFlow
+![Data prep output](images/Screenshot%202025-09-18%20125756.png)
 ---
 
 ## 🧩 Node setup
@@ -48,6 +40,10 @@ This package contains a complete, **copy‑pasteable** guide to build the workfl
 - **Operation:** `Download`
 - **File ID:** your CSV file id (e.g. `1wy6...`)
 - **Binary property:** `data` (default)
+---
+## Drive CSV file 
+![Email result](images/Screenshot%202025-09-18%20125812.png)
+
 
 ### 2) Extract from File
 - **Binary property:** `data`
@@ -412,7 +408,9 @@ return [{
 - **To:** your email
 - **Subject:** `={ $json.email_subject }`
 - **Message (HTML):** `={ $json.email_html }`
-
+---
+## output Gmail
+![Workflow overview](images/Screenshot%202025-09-18%20125543.png)
 ---
 
 ## 🩺 Troubleshooting
