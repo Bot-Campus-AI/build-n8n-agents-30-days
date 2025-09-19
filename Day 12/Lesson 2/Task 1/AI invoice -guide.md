@@ -20,9 +20,10 @@ In n8n: **Credentials** → add each provider. Do **not** paste secrets into nod
 
 ---
 
-## 📸 Screenshots
-![Workflow overview](images/email_result.png)
-![Sample email](images/email.png)
+## Canvas
+![Sample email](images/workflow_canvas.png)
+
+
 
 ---
 
@@ -229,6 +230,11 @@ return [
 - **Message (HTML):** `={{ $json.bodyHtml }}`
 
 ---
+## Output 
+
+![Workflow overview](images/email_result.png)
+---
+
 
 ## ▶️ Test
 1. Click **Execute workflow**.  
