@@ -1,99 +1,126 @@
-# AI Invoice / Document Mailer — n8n Pin-to-Pin Guide
+# AI Invoice Demo — Drive → AI Summary → Gmail (n8n)
 
-Manual Trigger → **Set (Edit Fields)** → **Google Drive (Download file)** → **AI Agent (Gemini)** → **Code (JavaScript)** → **Gmail (Send a message)**
+> **Goal:** Take a file from **Google Drive**, let an **AI Agent (Gemini)** generate a **subject** and a **premium HTML email**, split it into **Subject** and **Body**, and send via **Gmail**.
 
-## Copy–paste for the AI Agent (System Prompt)
-```text
-You are “DriveDoc Mailer,” an AI that reads a document (PDF/image) and produces an email-ready summary.
+---
+
+## ✅ Authentication (set before wiring)
+- **Google Drive OAuth2** – for the **Download file** node.
+- **Google Gemini** – for the **Google Gemini Chat Model** node.
+- **Gmail OAuth2** – for the **Send a message** node.
+
+In n8n: **Credentials** → add each provider. Do **not** paste secrets into nodes.
+
+---
+
+## 🔎 Power Pattern (Input → Process → Output)
+1) **Input:** File from **Google Drive**  
+2) **Process:** **AI Agent (Gemini)** creates **SUBJECT + HTML BODY**  
+3) **Output:** **Code** splits fields → **Gmail** sends email
+
+---
+
+## 📸 Screenshots
+![Workflow overview](images/workflow.png)
+![Sample email](images/email.png)
+
+---
+
+## 🧩 Node-by-node (exact steps)
+
+### 1) Manual Trigger
+- **Node:** *When clicking ‘Execute workflow’*
+- **Why:** Run the flow on demand from the editor.
+
+### 2) Edit Fields (optional)
+- **Node:** *Set*
+- Add a String field (optional) for reference:
+  - **Name:** `Invoice URL`
+  - **Value:** your public Drive link (not required; Drive node handles fileId).
+
+### 3) Download file (Google Drive)
+- **Node:** *Google Drive → Operation: Download*
+- **File ID:** paste from your Drive link  
+  Example: `https://drive.google.com/file/d/1xsEyWTEqbif07l5zF1tHjWrYCCKgdPif/view` → **File ID:** `1xsEyWTEqbif07l5zF1tHjWrYCCKgdPif`
+- **Share setting:** Drive file must be **Anyone with link – Viewer**.
+
+### 4) Google Gemini Chat Model
+- **Node:** *Google Gemini Chat Model*
+- Select your **Gemini** credentials.
+---
+
+## 🧠 Copy‑paste — AI Agent → **System Prompt**
+```
+You are “DriveDoc Mailer,” an AI that reads a document from Google Drive and produces an email-ready summary.
 
 INPUTS (provided via n8n fields/expressions)
-- pdf_url: {{$json.pdfUrl || $json.url || $json.publicUrl || $json['Invoice URL'] || ''}}
-- file_name: {{$json.fileName || $json.name || ''}}
+- pdf_url: {{$json.webViewLink || ('https://drive.google.com/file/d/' + $json.fileId + '/view')}}
+- file_name: {{$json.name || $json.fileName || ''}}
+- mime_type: {{$json.mimeType || ''}}
 - ocr_text: {{$json.ocr_text || ''}}   // optional pre-extracted text
-- palette_hint: {{$json.palette_hint || 'emerald'}}  // teal | emerald | amber | violet | rose | slate
+- palette_hint: {{$json.palette_hint || 'slate'}}  // teal | emerald | amber | violet | rose | slate
 
 WHAT TO READ
-- If a file is attached (PDF/image), read it. If text is provided in ocr_text, use it as additional context.
+- If a file is attached (PDF/image), read it.
+- If text is provided in ocr_text, use it as additional context.
 - If nothing is readable, still produce a graceful email with “Unknown” where needed.
 
 OBJECTIVE
 Create a professional executive summary of the document with a clean HTML email body and a short, informative subject.
 
-COLOR THEMES (choose ONE; use palette_hint if given, else pick deterministically by hashing file_name)
-- teal    HDR_A #0F766E → HDR_B #14B8A6, ACC #115E59, TEXT #0F172A
-- emerald HDR_A #065F46 → HDR_B #10B981, ACC #064E3B, TEXT #0F172A
-- amber   HDR_A #92400E → HDR_B #F59E0B, ACC #78350F, TEXT #111827
-- violet  HDR_A #4C1D95 → HDR_B #8B5CF6, ACC #3B0764, TEXT #111827
-- rose    HDR_A #9F1239 → HDR_B #F43F5E, ACC #881337, TEXT #111827
-- slate   HDR_A #0F172A → HDR_B #475569, ACC #334155, TEXT #E2E8F0
+COLOR THEME
+Use the palette_hint to theme the email header and button.
+  teal  = #0d9488
+  emerald = #059669
+  amber = #d97706
+  violet = #7c3aed
+  rose   = #e11d48
+  slate  = #334155
 
-OUTPUT FORMAT — EXACTLY TWO SECTIONS (no extra text, no code fences)
+OUTPUT FORMAT — EXACTLY TWO SECTIONS (no extra text, no code fences):
 SUBJECT:
 <one concise line — include file_name when useful>
 
 BODY:
-<!doctype html>
-<html lang="en">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Document Summary</title></head>
-  <body style="margin:0;padding:0;background:#F8FAFC;color:THEME_TEXT;font-family:Inter,Arial,Helvetica,sans-serif;">
-    <!-- Replace THEME_* tokens according to the chosen theme -->
-    <div style="background:linear-gradient(90deg,THEME_HDR_A,THEME_HDR_B);padding:22px 24px;border-radius:12px 12px 0 0;">
-      <h1 style="margin:0;color:#fff;font-size:22px;line-height:1.3;">Document Summary</h1>
-      <div style="color:#E2E8F0;font-size:13px;margin-top:4px;">File: {{file_name || 'Unknown'}}</div>
-    </div>
+<html>…</html>
 
-    <div style="max-width:720px;margin:0 auto;padding:20px;">
-      <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:0 0 12px 12px;padding:18px;box-shadow:0 6px 20px rgba(15,23,42,.06);">
-
-        <h3 style="margin:6px 0 8px 0;">Key Highlights</h3>
-        <ul style="margin:0 0 12px 18px;padding:0;line-height:1.6;">
-          <!-- 3–6 crisp bullets with the most important facts/dates/figures from the doc -->
-        </ul>
-
-        <h3 style="margin:8px 0 6px 0;">Summary</h3>
-        <p style="margin:0 0 10px 0;"> <!-- 5–8 sentence executive summary based strictly on the file and ocr_text. If uncertain, say “Unknown”. --> </p>
-
-        <h3 style="margin:10px 0 6px 0;">Details</h3>
-        <ul style="margin:0 0 8px 18px;padding:0;line-height:1.6;">
-          <!-- e.g., Owner/Team, Relevant dates, Sections, Risks, Next actions -->
-        </ul>
-
-        <!-- CTA only if pdf_url is available -->
-        <div style="text-align:center;margin-top:14px;">
-          <!-- <a href="PDF_URL" style="display:inline-block;padding:12px 18px;background:THEME_ACC;color:#fff;text-decoration:none;border-radius:10px;font-weight:600;">View Document</a> -->
-        </div>
-
-      </div>
-      <div style="text-align:center;color:#64748B;font-size:12px;padding:16px 8px;">
-        Generated automatically from the provided file/text. Review for accuracy.
-      </div>
-    </div>
-  </body>
-</html>
-
-RULES
-- Be factual and non-speculative. No logos or third-party branding. If a value is unclear, write “Unknown”.
-- SUBJECT must be plain text; BODY must be valid HTML with inline CSS.
-
+HTML REQUIREMENTS
+- Self-contained HTML (inline CSS), width 600px max.
+- Sections: header (title + file_name), key highlights (bullets), short paragraph summary, optional details (dates, entities, amounts), and a CTA button:
+  - Button text: “View Document”
+  - Button href: use pdf_url if present; otherwise omit the button.
+- If a value is unclear, print “Unknown”.
+- Do not include JSON. Do not include “PDF_URL:” lines. Only the two sections above.
 ```
 
-## Code node (JavaScript) to split SUBJECT/BODY
-```js
+### 5) AI Agent
+- **Node:** *AI Agent*
+- Attach **Google Gemini Chat Model** as the **Language Model**.
+- Paste the **System Prompt** below (exact).  
+- The agent will read the previous node’s JSON + binary and output **two sections**: `SUBJECT:` and `BODY:` (HTML).
+
+### 6) Code in JavaScript
+- **Node:** *Code*
+- Paste the **Function code** below. It extracts `subject`, `bodyHtml`, and a best-effort `pdfUrl`.
+---
+
+## 🧩 Copy‑paste — **Code (JavaScript) node**
+```javascript
 // n8n Code node (JavaScript)
-// Input: AI Agent output with two sections (SUBJECT: / BODY:)
+// Input: the previous AI Agent node's output
 // Output: { subject, bodyHtml, pdfUrl }
 
 function getRaw(aiOut) {
+  // Be defensive: support various shapes
   return (
-    aiOut?.output ??
-    aiOut?.text ??
-    aiOut?.data ??
-    aiOut?.content ??
-    aiOut?.choices?.[0]?.message?.content ??
-    aiOut?.choices?.[0]?.text ??
-    aiOut?.message ??
-    aiOut ??
+    aiOut?.output ||
+    aiOut?.text ||
+    aiOut?.data ||
+    aiOut?.content ||
+    aiOut?.choices?.[0]?.message?.content ||
+    aiOut?.choices?.[0]?.text ||
+    aiOut?.message ||
+    aiOut ||
     ''
   );
 }
@@ -101,7 +128,9 @@ function getRaw(aiOut) {
 function stripFences(s) {
   let t = String(s || '').trim();
   if (t.startsWith('```')) {
+    // remove first fence
     t = t.replace(/^```[a-zA-Z0-9]*\s*/, '');
+    // remove trailing fence
     t = t.replace(/```$/, '');
   }
   return t.trim();
@@ -109,6 +138,8 @@ function stripFences(s) {
 
 function parseSections(raw) {
   const text = stripFences(raw);
+
+  // Find SUBJECT then BODY
   const subjRe = /^\s*SUBJECT:\s*([\s\S]*?)\n\s*BODY:\s*/i;
   const m = text.match(subjRe);
 
@@ -119,11 +150,13 @@ function parseSections(raw) {
     subject = (m[1] || '').trim();
     body = text.slice(m.index + m[0].length).trim();
   } else {
+    // Fallback: try simpler split
     const idx = text.toUpperCase().indexOf('BODY:');
     if (idx > -1) {
       subject = text.slice(0, idx).replace(/^\s*SUBJECT:\s*/i, '').trim();
       body = text.slice(idx + 5).trim();
     } else {
+      // Nothing matched: put everything into body
       body = text;
     }
   }
@@ -132,33 +165,81 @@ function parseSections(raw) {
 
 function ensureHtml(html) {
   const t = String(html || '').trim();
-  if (/^\s*</.test(t) && t.includes('</')) return t;
-  // Wrap plain text if not HTML
+  if (t.startsWith('<') && t.includes('</')) return t;
+  // Wrap plain text as preformatted HTML if the model failed to send HTML
   return (
     '<!DOCTYPE html><html><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-    '</head><body style="font-family:Arial,Segoe UI,Helvetica,Roboto,sans-serif; padding:16px; background:#F8FAFC; color:#0F172A;">' +
-    '<pre style="white-space:pre-wrap; word-break:break-word; font:inherit; margin:0;">' +
+    '</head><body style="font-family:Arial,Segoe UI,Helvetica,Roboto,sans-serif; padding:16px;">' +
+    '<pre style="white-space:pre-wrap; word-break:break-word; font:inherit;">' +
     t.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
     '</pre></body></html>'
   );
 }
 
-function extractUrl(html) {
-  const href = html.match(/href=["']([^"']+)["']/i);
-  if (href) return href[1];
-  const any = html.match(/https?:\/\/[^\s"'<>]+/i);
-  return any ? any[0] : '';
+function extractPdfUrl(html) {
+  // Try to pull a likely PDF/document link from anchors first
+  const hrefMatch = html.match(/href=["']([^"']+)["']/i);
+  if (hrefMatch) return hrefMatch[1];
+
+  // Fallback: any http(s) link in text
+  const urlMatch = html.match(/https?:\/\/[^\s"'<>]+/i);
+  return urlMatch ? urlMatch[0] : '';
 }
 
-// ---- main ----
-const raw = getRaw($input.first().json);
+// ---- Main ----
+const item = $input.first();
+const raw = getRaw(item.json);
+
+// Parse the two sections
 const { subject, body } = parseSections(raw);
+
+// Guarantee HTML body
 const bodyHtml = ensureHtml(body);
-const pdfUrl = extractUrl(bodyHtml);
 
-return [{ json: { subject: subject || 'Document Summary', bodyHtml, pdfUrl } }];
+// Best-effort PDF URL extraction (handy if you want to log or reuse it)
+const pdfUrl = extractPdfUrl(bodyHtml);
 
+// Return single clean payload
+return [
+  {
+    json: {
+      subject: subject || 'Document Summary',
+      bodyHtml,
+      pdfUrl
+    }
+  }
+];
 ```
 
-See `images/` for screenshots.
+---
+
+### 7) Send a message (Gmail)
+- **Node:** *Gmail → Send a message*
+- **To:** your email  
+- **Subject:** `=Invoice AI Agent -  {{ $json.subject }}`  
+- **Message (HTML):** `={{ $json.bodyHtml }}`
+
+
+
+
+
+## 🔗 Gmail field mapping
+- **Subject:** `=Invoice AI Agent -  {{ $json.subject }}`  
+- **Message (HTML):** `={{ $json.bodyHtml }}`
+
+---
+
+## ▶️ Test
+1. Click **Execute workflow**.  
+2. Confirm the **AI Agent** prints `SUBJECT` + `BODY`.  
+3. The **Code** node returns `subject` and `bodyHtml`.  
+4. Check your inbox for the HTML email with **“View Document”**.
+
+---
+
+## 🧰 Troubleshooting
+- **File won’t open:** In Drive, set **Anyone with link – Viewer**.  
+- **Empty email:** Agent must output both labels `SUBJECT:` and `BODY:`.  
+- **Plain text:** The Code node wraps plain text into valid HTML automatically.  
+- **Broken link:** Verify `fileId` from **Download file** output.
