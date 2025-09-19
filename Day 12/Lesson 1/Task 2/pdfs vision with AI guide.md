@@ -225,7 +225,7 @@ return [{ json: { subject: subject || 'PDF Summary', body, pdf_url, raw } }];
 3. Open your inbox — you should see a premium HTML email with an **Open PDF** button.
 ---
 ## Gmail Output 
-![Result email](images/email_pdf.png)
+![Result email](images/mail-output.jpeg)
 
 
 ---
