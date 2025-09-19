@@ -1,19 +1,14 @@
-# PDF Vision — n8n (PDF → HTML Email) — Pin‑to‑Pin Guide
+# PDF Vision — n8n (PDF → HTML Email) —
 
 This kit builds a workflow that:
 **1)** accepts a Google Drive PDF → **2)** uses **AI Agent + OpenAI Chat Model** to produce a polished HTML email (title/overview/highlights/image descriptions) → **3)** uses **Code (JS)** to normalize the output → **4)** emails it with **Gmail**.
 
-**Bundle contents**
-- `workflow.json` — import‑ready workflow.
-- `README.md` — this step‑by‑step guide.
-- `images/` — screenshots (workflow, result email, sample PDF).
+
 
 ---
 
-## Screenshots
+## Canvas workflow 
 ![Workflow](images/workflow_openai.png)
-![Result email](images/email_pdf.png)
-![Sample PDF page](images/realestate_sample.png)
 
 ---
 
@@ -43,6 +38,8 @@ This kit builds a workflow that:
    `https://drive.google.com/file/d/<FILE_ID>/view` → copy `<FILE_ID>`.
 3. Leave Options default.
 4. **Wire**: Manual Trigger → Edit Fields → Download file.
+![Sample PDF page](images/realestate_sample.png)
+
 
 ### D) AI Agent (with **OpenAI Chat Model**)
 1. **Drag** `AI Agent` → **Prompt Type**: `Define`.
@@ -226,6 +223,10 @@ return [{ json: { subject: subject || 'PDF Summary', body, pdf_url, raw } }];
 1. Click **Execute workflow**.
 2. Watch nodes turn green.
 3. Open your inbox — you should see a premium HTML email with an **Open PDF** button.
+---
+## Gmail Output 
+![Result email](images/email_pdf.png)
+
 
 ---
 
