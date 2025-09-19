@@ -21,7 +21,7 @@ In n8n: **Credentials** → add each provider. Do **not** paste secrets into nod
 ---
 
 ## 📸 Screenshots
-![Workflow overview](images/workflow.png)
+![Workflow overview](images/email_result.png)
 ![Sample email](images/email.png)
 
 ---
