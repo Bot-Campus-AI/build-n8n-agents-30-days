@@ -1,7 +1,6 @@
-# **MongoDB Memory (Permanent Chat Memory) — n8n AI Agent, Pin-to-Pin Guide**
+# **MongoDB Memory (Permanent Chat Memory) — n8n AI Agent Guide**
 
-This walkthrough is laser-focused on **MongoDB as the memory store** so your **AI Agent can remember every previous chat permanently**. It’s written for someone totally new to n8n, and it mirrors the structure of your uploaded workflow (same node names, wiring, and key settings). fileciteturn9file0
-
+This walkthrough is laser-focused on **MongoDB as the memory store** so your **AI Agent can remember every previous chat permanently**. It’s written for someone totally new to n8n, and it mirrors the structure of your uploaded workflow (same node names, wiring, and key settings). 
 ---
 
 ## What you’ll build (at a glance)
@@ -12,7 +11,10 @@ This walkthrough is laser-focused on **MongoDB as the memory store** so your **A
 - **OpenAI Chat Model** (LLM brain)  
 - **MongoDB Chat Memory** (permanent memory store)
 
-This wiring lets the Agent pull **past conversation turns** from MongoDB before replying, then keep storing the new turns for next time. fileciteturn9file0
+This wiring lets the Agent pull **past conversation turns** from MongoDB before replying, then keep storing the new turns for next time. 
+
+--- 
+![Canvas](images/canvas.png)
 
 ---
 
@@ -35,7 +37,7 @@ This wiring lets the Agent pull **past conversation turns** from MongoDB before 
 
 ## Node-by-Node Build (original names + what to click)
 
-> The node names and key values below match your JSON: **databaseName** `n8n-memory`, **contextWindowLength** `15`, **model** `gpt-4`, and the exact wiring (language model & memory ports into the Agent). fileciteturn9file0
+> The node names and key values below match your JSON: **databaseName** `n8n-memory`, **contextWindowLength** `15`, **model** `gpt-4`, and the exact wiring (language model & memory ports into the Agent).
 
 ### 1) **When chat message received**  
 *Type:* `@n8n/n8n-nodes-langchain.chatTrigger`  
@@ -45,7 +47,7 @@ This wiring lets the Agent pull **past conversation turns** from MongoDB before 
 1. Drag **When chat message received** to the canvas.  
 2. No extra config needed for this guide.
 
-**Wire:** **When chat message received → AI Agent** (main output to main input). fileciteturn9file0
+**Wire:** **When chat message received → AI Agent** (main output to main input). 
 
 ---
 
@@ -66,7 +68,7 @@ This wiring lets the Agent pull **past conversation turns** from MongoDB before 
 *Type:* `@n8n/n8n-nodes-langchain.memoryMongoDbChat`  
 *Key params (from your JSON):*  
 - **Database Name:** `n8n-memory`  
-- **Context Window Length:** `15` (how many turns the Agent pulls each time) fileciteturn9file0
+- **Context Window Length:** `15` (how many turns the Agent pulls each time) 
 
 **Steps**
 1. Drag **MongoDB Chat Memory** onto the canvas.  
@@ -76,12 +78,13 @@ This wiring lets the Agent pull **past conversation turns** from MongoDB before 
 
 **Wire:** **MongoDB Chat Memory → AI Agent** via the Agent’s **ai_memory** port (the small memory port).  
 This gives the Agent **permanent, queryable conversation memory** in MongoDB across sessions. fileciteturn9file0
-
+---
+![Database](images/Mongodb.png)
 ---
 
 ### 4) **AI Agent**  
 *Type:* `@n8n/n8n-nodes-langchain.agent`  
-*Prompt Type:* `Define` (we’ll paste the system prompt below) fileciteturn9file0
+*Prompt Type:* `Define` (we’ll paste the system prompt below) 
 
 **What this node does**  
 - Receives the **new user message** from the trigger.  
@@ -137,7 +140,7 @@ OUTPUT
 And the MongoDB memory node uses:  
 - **databaseName:** `n8n-memory`  
 - **contextWindowLength:** `15`  
-The model node uses **gpt-4**. fileciteturn9file0
+The model node uses **gpt-4**.
 
 ---
 
@@ -182,11 +185,12 @@ The model node uses **gpt-4**. fileciteturn9file0
 - **Durable**: data survives restarts and deploys.  
 - **Scalable**: handles growth far better than a spreadsheet or in-memory store.  
 - **Queryable**: you can inspect or export conversations for analytics and improvements.
-
+---
+![Database](images/output.png)
 ---
 
 ### You’re done 🎉
 
-You now have an **AI Agent with permanent MongoDB memory**: the Agent reads past turns before answering and keeps writing new turns back for the next time—**exactly how your JSON is wired** (Agent + OpenAI Chat Model + MongoDB Chat Memory, with `n8n-memory` DB and context window 15). fileciteturn9file0
+You now have an **AI Agent with permanent MongoDB memory**: the Agent reads past turns before answering and keeps writing new turns back for the next time—**exactly how your JSON is wired** (Agent + OpenAI Chat Model + MongoDB Chat Memory, with `n8n-memory` DB and context window 15). 
 
 If you want, I can also export this guide as a **PDF** or extend it to support **conversation resets**, **user-level namespaces** (separate memory per user), or **selective forgetting** flows.
