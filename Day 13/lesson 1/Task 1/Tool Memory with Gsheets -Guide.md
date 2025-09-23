@@ -1,6 +1,6 @@
 # Alternative “Tool Memory” without a DB (Google Sheets) — n8n Beginner Guide
 
-This guide explains—step-by-step and **pin-to-pin**—how to build a memory-enabled AI chat assistant that **stores & recalls context in Google Sheets** (no database required). It’s written for someone totally new to n8n.
+This guide explains how to build a memory-enabled AI chat assistant that **stores & recalls context in Google Sheets** (no database required). It’s written for someone totally new to n8n.
 
 We’ll recreate the exact flow from your workflow file (names, wiring, and expressions match your JSON). fileciteturn7file0
 
@@ -12,9 +12,8 @@ We’ll recreate the exact flow from your workflow file (names, wiring, and expr
 **When chat message received** → **Google Sheets (Append row in sheet)** → **AI Agent**  
 …with **OpenAI Chat Model** attached as the model and **Get row(s) in sheet in Google Sheets** attached as the tool → **Google Sheets (Append or update row in sheet)**
 
-![Canvas diagram](sandbox:/mnt/data/alternative-agent-memory-kit/images/workflow_diagram.png)  
-_Minimum sheet columns used:_  
-![Sheet schema](sandbox:/mnt/data/alternative-agent-memory-kit/images/sheet_schema.png)
+![Canvas diagram](images/canvas.png)  
+
 
 ---
 
@@ -31,11 +30,6 @@ _Minimum sheet columns used:_
    ```
    Make sure the n8n Google account can access/edit the sheet.
 
----
-
-## Node-by-Node Construction (with original node names)
-
-> We’ll keep node names exactly as shown in your workflow so wiring is easy. Settings below match your JSON. fileciteturn7file0
 
 ### 1) **When chat message received** (type: `@n8n/n8n-nodes-langchain.chatTrigger`)
 **What it does:** Starts a run whenever a chat message comes in (for Chat UI, webhooks, etc.).  
@@ -71,6 +65,8 @@ _Minimum sheet columns used:_
 
 ### 3) **AI Agent** (type: `@n8n/n8n-nodes-langchain.agent`)
 **What it does:** Reads memory from the Sheet (via tool), then replies using the LLM.
+
+
 
 **3A — Attach a Language Model**
 - Add **OpenAI Chat Model** (type: `@n8n/n8n-nodes-langchain.lmChatOpenAi`).
