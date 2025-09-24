@@ -1,0 +1,126 @@
+{
+  "name": "Chat \u2192 Stability SD3 \u2192 Drive",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.chatTrigger",
+      "typeVersion": 1,
+      "position": [
+        -820,
+        -80
+      ],
+      "id": "chat-trigger-1",
+      "name": "When chat message received"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stability.ai/v2beta/stable-image/generate/sd3",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "authorization",
+              "value": "Bearer YOUR_STABILITY_API_KEY"
+            },
+            {
+              "name": "accept",
+              "value": "image/*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.chatInput }}"
+            },
+            {
+              "name": "output_format",
+              "value": "png"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -520,
+        -80
+      ],
+      "id": "http-stability-1",
+      "name": "HTTP Request (Stability SD3)"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "fileName": "={{ ($json.chatInput || 'image').slice(0,60).replace(/[^a-z0-9-_ ]/gi,'_').trim() }}-{{$now}}.png",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root"
+        },
+        "options": {
+          "resolveData": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -220,
+        -80
+      ],
+      "id": "gdrive-upload-1",
+      "name": "Upload to N8N Folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_DRIVE_CREDENTIAL_ID",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (Stability SD3)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request (Stability SD3)": {
+      "main": [
+        [
+          {
+            "node": "Upload to N8N Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "meta": {
+    "created_at": "2025-09-24T05:40:29.718536Z"
+  }
+}
