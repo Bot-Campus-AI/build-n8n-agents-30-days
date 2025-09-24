@@ -1,7 +1,9 @@
 # Stability.ai → n8n (Chat Trigger) → Google Drive — Final Illustrated Guide
 
 This guide shows how to: **copy the official cURL from Stability.ai**, **import it into n8n’s HTTP Request node**, make the **prompt dynamic from the Chat Trigger**, and **upload the generated image to Google Drive**.
-
+---
+### canvas
+![n8n canvas: Chat → HTTP → Drive](./assets/canvas.png)  
 ---
 
 ## 🔐 Required authentication (start here)
@@ -72,7 +74,7 @@ The binary image should appear under `binary.data`.
 - **Options → Resolve Data:** ✅
 
 **Screenshot (flow and Drive result):**  
-![n8n canvas: Chat → HTTP → Drive](./assets/canvas.png)  
+
 ![Google Drive: uploaded image in N8N folder](./assets/drive.png)
 
 ---
