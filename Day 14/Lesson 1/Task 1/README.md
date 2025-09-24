@@ -409,10 +409,3 @@ return [{
   → Reconnect Google OAuth2; confirm scopes include Calendar create and Gmail send.
 
 ---
-
-## What to deliver
-- This full README-style guide with inline code blocks.
-- Screenshots embedded as:
-  - `images/01-canvas-overview.png`
-  - `images/02-calendar-view.png`
-  - `images/03-email-proof.png`
