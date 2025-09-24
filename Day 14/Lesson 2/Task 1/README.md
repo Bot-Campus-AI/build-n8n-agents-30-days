@@ -1,10 +1,6 @@
 # Intelligent Email → Priority Triage → Calendar Booking (IST)
 One-line goal: watch Gmail for urgent emails (priority/emergency), auto-draft a professional reply, and book a doubt‑clearing Google Calendar slot—then reply in the **same thread**.
 
-![Flow canvas](images/01-flow-canvas.png "Flow canvas")
-![Calendar result](images/02-calendar-event.png "Calendar result")
-![Gmail thread reply](images/03-gmail-thread.png "Gmail thread reply")
-
 ---
 
 ## At‑a‑glance outcomes
@@ -32,9 +28,11 @@ One-line goal: watch Gmail for urgent emails (priority/emergency), auto-draft a 
 
 Folder `workflow/triage_calendar_booking.json` contains an import‑ready n8n workflow JSON.
 
+![Flow canvas](images/01-flow-canvas.png "Flow canvas")
+
 ---
 
-## Step‑by‑Step (inline code at the exact step)
+## Step‑by‑Step 
 
 ### 1) Gmail Trigger — watch for new mail
 **Why:** Provide `threadId`, `Subject`, and content for downstream logic.
@@ -271,6 +269,8 @@ return items.map((item) => {
   `={{ $('Code in JavaScript').item.json.reply_html }}`  
 - ➜ **f.** **Credentials:** Gmail OAuth.  
 - **Validate:** Reply appears in the same Gmail thread.
+---
+![Gmail thread reply](images/03-gmail-thread.png "Gmail thread reply")
 
 ---
 
@@ -285,7 +285,8 @@ return items.map((item) => {
 - ➜ **f.** **Additional fields → Description:** `={{ $json.meeting_description }}`  
 - ➜ **g.** **Credentials:** Calendar OAuth.  
 - **Validate:** Event appears at the computed IST slot (e.g., “Support — Doubt‑clearing”).
-
+---
+![Calendar result](images/02-calendar-event.png "Calendar result")
 ---
 
 ## Node list (order)
@@ -331,8 +332,3 @@ return items.map((item) => {
 - **Gmail trigger idle** → Ensure workflow is **Active** and polling schedule is reasonable.  
 
 ---
-
-## Files in this package
-- `README.md` — this guide
-- `images/01-flow-canvas.png`, `images/02-calendar-event.png`, `images/03-gmail-thread.png`
-- `workflow/triage_calendar_booking.json` — n8n import JSON (if provided)
