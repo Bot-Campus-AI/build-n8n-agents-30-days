@@ -22,6 +22,10 @@ One‑line goal: Post text + an uploaded image to a **Facebook Page** from an n8
 - **Merge (combineAll)** → merges JSON from *Code* with the **binary** from the *Form*
 - **Facebook Graph API** → `POST me/photos`, **Send Binary File = true**, **Input Binary Field = image**, `caption = {{$json.post_text}}`
 
+--- 
+### canvas 
+![canvas](images/02-canvas.png)
+
 ## Step‑by‑Step
 
 ### 1) Credential
@@ -101,6 +105,11 @@ image
 ```
 image
 ```
+---
+### Posted Output 
+
+![output](workflow/Facebook AI post.json)
+
 
 ## Testing & Validation
 1) Execute workflow → submit prompt + image.
@@ -114,11 +123,3 @@ image
 - **Posting to personal profile** → Not supported; use a **Page**.
 
 ---
-
-### Files in this package
-- `images/01-workflow.png` — workflow screenshot
-- `images/02-canvas.png` — canvas view
-- `images/03-output.png` — sample post output
-- `workflow/Facebook AI post.json` — n8n workflow export
-
-*Packaged: 2025-09-26 11:00*
