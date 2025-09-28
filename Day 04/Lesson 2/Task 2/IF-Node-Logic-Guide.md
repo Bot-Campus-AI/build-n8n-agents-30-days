@@ -221,6 +221,9 @@ Send a message1  → To      = {{ $('Email Data1').item.json.sender }}
 Send a message1  → Subject = {{ $('Email Data1').item.json.subject }}
 Send a message1  → Message = {{ $('Email Data1').item.json.body }}
 ```
+---
+## Email output
+![Email output](images/workflow-graph.png)
 
 ---
 
@@ -239,14 +242,4 @@ Send a message1  → Message = {{ $('Email Data1').item.json.body }}
 - **Undefined property** → keep the provided null-safe expressions; **Email Data1** must run before Gmail nodes.  
 - **No email received** → check Spam; ensure Gmail node is in **Send** mode and **Email Type = Text**.
 
----
-
-## What to Deliver
-- Working triage workflow with 3 outcomes.  
-- Gmail OAuth2 credential connected and tested.  
-- Company domain consistent in **both** IF nodes.  
-- (Optional) Wire each branch to storage (DB/Sheets) for logging.
-
-## Diagram / Screenshot
-![IF Logic with Urgent keyword Demo](images/01-if-logic-demo.png)
 
