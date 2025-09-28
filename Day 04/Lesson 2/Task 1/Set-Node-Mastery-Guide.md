@@ -1,151 +1,118 @@
 #  n8n — Set Node Mastery: Transform, clean, and enhance
 
+One‑line goal: Clean messy contact‑form data, validate email & phone, route with **IF (AND)**, and append valid rows to Google Sheets.
 
-> **Auth note:** Set nodes need no auth. If you later add Google Sheets/Gmail, set up Google OAuth2 in n8n (Sheets/Gmail scope).
+## At‑a‑glance outcomes
+- Title‑case **name**, lowercase **email**, E.164 **phone**, trimmed **message**.
+- Adds: `emailDomain`, `maskedEmail`, `messageLength`, `timestamp`, `tags[]`.
+- **Boolean** flags: `isValidEmail`, `isValidPhone`. IF uses **AND**.
+- True path → Google Sheets append; False path → NoOp (or alert).
 
----
+## Prereqs & Auth
+- No auth for Manual Trigger / Set / IF / NoOp.
+- **Google Sheets OAuth2** (n8n):
+  ➜ a. **Credentials → New → Google Sheets OAuth2 API**  
+  ➜ b. Google Cloud Console → OAuth client (**Web application**).  
+  ➜ c. Authorized redirect: `https://YOUR_N8N_DOMAIN/rest/oauth2-credential/callback`  
+  ➜ d. Scopes: `https://www.googleapis.com/auth/spreadsheets`, `https://www.googleapis.com/auth/drive.readonly`  
+  ➜ e. Paste Client ID/Secret in n8n → **Connect**.  
+  ➜ f. n8n **Settings → Public URL** must be your HTTPS domain.
 
-##  Goal
-Take messy contact-form data (name, email, phone, message), **normalize & validate it** with a Set node, then route only **valid** items forward.
+## Architecture snapshot
+1) **Manual Trigger**  
+2) **Sample Input (Set)**  
+3) **Clean & Enhance (Set)**  
+4) **Valid? (IF)** — AND both flags  
+ • **true** → **Append row in sheet (Google Sheets)**  
+ • **false** → **No Operation, do nothing**
 
-**Flow:** `Manual Trigger ➝ Set (Sample Input) ➝ Set (Clean & Enhance) ➝ IF (Valid?)`
+## Step‑by‑Step
+### 1) Manual Trigger
+➜ a. Drag **Manual Trigger** → no settings.
 
----
+### 2) Sample Input (Set)
+➜ a. Drag **Set** → rename **Sample Input (Set)**  
+➜ b. Add Strings:  
+   - `fullName` = `Enter Your name`  
+   - `email`    = ` USER@Example.COM `  
+   - `phone`    = `+91-93980 40588`  
+   - `message`  = `Enter a message here`  
+➜ c. Click **Execute node**.
 
-##  Step-by-step
-
-### 1) Manual Trigger — run anytime
-- Drag **Manual Trigger** onto the canvas. No settings needed.
-
-### 2) Set — Sample Input (simulate a form submit)
-- Drag **Set** and rename to **Sample Input**.
-- Toggle **Keep Only Set** = **On**.
-- Add fields:
-  - `fullName` = `  jAshwanth   boddupally  `
-  - `email` = `  USER@Example.COM  `
-  - `phone` = ` +91-93980 40588 `
-  - `message` = ` Need a quote for website + chatbot `
-  - `source` = `Website`
-
-Run **Execute node** to emit this test item.
-
-### 3) Set — Clean & Enhance (normalize, validate, enrich)
-- Drag **Set** and rename to **Clean & Enhance**.
-- Connect **Sample Input ➝ Clean & Enhance**.
-- Toggle **Keep Only Set** = **On**.
-- Add fields as **Expressions** (gear → *Add Expression*).
-
-**A. Name (title-case)**
+### 3) Clean & Enhance (Set)
+➜ a. Drag **Set** → rename **Clean & Enhance (Set)**  
+➜ b. Add **String** (click **fx**):
+- **name**
 ```js
-={{ ($json.fullName || '')
-  .trim()
-  .toLowerCase()
-  .split(/\s+/)
-  .map(p => p.charAt(0).toUpperCase() + p.slice(1))
-  .join(' ') }}
+={{ ($json.fullName || '').trim().toLowerCase().split(/\s+/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ') }}
 ```
-
-**B. Email (normalized)**
+- **email**
 ```js
 ={{ ($json.email || '').trim().toLowerCase() }}
 ```
-
-**C. Email domain**
+- **emailDomain**
 ```js
 ={{ ($json.email || '').trim().toLowerCase().split('@')[1] || '' }}
 ```
-
-**D. Phone (digits only)**
+- **phone** (E.164 IN – simple)
 ```js
-={{ ($json.phone || '').replace(/\D/g, '') }}
+={{ (()=>{ const d = ($json.phone || '').replace(/\D/g,''); if(!d) return ''; if(d.startsWith('91')) return '+'+d; if(d.length===10) return '+91'+d; return '+'+d; })() }}
 ```
-
-**E. Phone (E.164, simple India logic)**
-```js
-={{ (()=>{ 
-  const d = ($json.phone || '').replace(/\D/g,'');
-  if (!d) return '';
-  if (d.startsWith('91')) return '+' + d;
-  if (d.length === 10) return '+91' + d;
-  return '+' + d;
-})() }}
-```
-
-**F. Message (trim)**
+- **message**
 ```js
 ={{ ($json.message || '').trim() }}
 ```
-
-**G. Message length (number)**
+- **messageLength**
 ```js
 ={{ (($json.message || '').trim()).length }}
 ```
-
-**H. Valid email (boolean)**
+- **maskedEmail**
 ```js
-={{ /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(($json.email || '').trim()) }}
+={{ (()=>{ const e = ($json.email||'').trim().toLowerCase(); const [u,d]=e.split('@'); if(!u||!d) return ''; return u[0]+'***@'+d; })() }}
 ```
-
-**I. Valid phone (boolean)**
-```js
-={{ (($json.phone || '').replace(/\D/g,'').length) >= 10 }}
-```
-
-**J. Masked email (safe preview)**
-```js
-={{ (()=>{ 
-  const e = ($json.email || '').trim().toLowerCase();
-  const [u,d] = e.split('@'); 
-  if(!u || !d) return '';
-  return u[0] + '***@' + d;
-})() }}
-```
-
-**K. Tags (array)**
-```js
-={{ [
-  ($json.source || 'unknown').toLowerCase(),
-  ($json.email ? 'hasEmail' : 'noEmail'),
-  ($json.phone ? 'hasPhone' : 'noPhone'),
-  (($json.message || '').trim().length > 40 ? 'longMsg' : 'shortMsg')
-] }}
-```
-
-**L. Timestamp (ISO string)**
+- **timestamp**
 ```js
 ={{ $now.toISO() }}
 ```
 
-### 4) IF — Valid?
-- Drag **IF** and rename to **Valid?**.
-- Connect **Clean & Enhance ➝ Valid?**.
-- **Condition (Expression mode):**
+➜ c. Add **Boolean** (not String):
+- **isValidEmail**
 ```js
-={{ $json.isValidEmail && $json.isValidPhone }}
+={{ /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(($json.email||'').trim()) }}
 ```
-- **True** output → proceed to databases/Sheets/CRM/email.  
-- **False** output → send to a dead-letter or alert flow.
+- **isValidPhone**
+```js
+={{ (($json.phone||'').replace(/\D/g,'').length) >= 10 }}
+```
 
----
+### 4) IF — Valid?
+**Method A (simple):**
+- Condition 1 → **Value 1 (fx)** `={{ $json.isValidEmail }}` → **is true**  
+- Condition 2 → **Value 1 (fx)** `={{ $json.isValidPhone }}` → **is true**  
+- **Combine conditions:** **All** (AND)
 
-## Quick test
-1. Execute the workflow.  
-2. Inspect the **Clean & Enhance** output: normalized name/email/phone, flags, tags.  
-3. Flip the input values (bad email/short phone) and confirm **IF** routing changes.
+**If flags are strings**: enable **Convert types where required** OR use:
+```js
+={{ (String($json.isValidEmail).toLowerCase()==='true') && (String($json.isValidPhone).toLowerCase()==='true') }}
+```
 
----
+### 5) Google Sheets (true path)
+- **Operation:** Append  
+- **Document:** select by URL  
+- **Sheet name:** `Sheet1` (or your tab)  
+- **Map columns:** `NAME, EMAIL, PHONE, MESSAGE, TIME` → from `$json`
 
-##  Expression quick-reference
-- Trim & lower: `={{ ($json.email || '').trim().toLowerCase() }}`  
-- Title-case: `={{ $json.fullName.toLowerCase().split(/\s+/).map(s=>s[0].toUpperCase()+s.slice(1)).join(' ') }}`  
-- Digits only: `={{ ($json.phone || '').replace(/\D/g,'') }}`  
-- Email regex: `={{ /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(($json.email||'').trim()) }}`  
-- Tags array: `={{ [ $json.source, (($json.message||'').trim().length>40?'long':'short') ] }}`  
-- Timestamp: `={{ $now.toISO() }}`
+## Testing & Validation
+➜ a. Run **Sample Input → Clean & Enhance** (flags should be true/false booleans).  
+➜ b. Run workflow → expect **true** path to append row.  
+➜ c. Break it (bad email/short phone) → expect **false** path to NoOp.
 
----
+## Troubleshooting
+- “expected boolean” → store flags as **Boolean** or cast in IF.  
+- No row → check IF **AND** + credentials.  
+- Column mismatch → fix headers exactly.  
+- Expressions not running → ensure **fx** is on.
 
-## Next steps (optional)
-- **Google Sheets (Append):** map the clean fields to columns.  
-- **Gmail/Slack:** notify sales with the enriched record.  
-- **Dedup:** Add a query step (by email) before saving.
+## What to Deliver
+- Working flow (Manual → Set → Set → IF → Sheets/NoOp).  
+- Booleans for validity. No type errors. Appends on true.
