@@ -3,7 +3,7 @@
 # IF–Node Email Triage (Urgent + Domain) — n8n
 **Goal:** Route email-like data using IF logic → (Urgent+Company) alert, (Company) priority, else standard.
 
-![Editor overview – expected layout](images/01-if-logic-demo.png)
+![Editor overview – expected layout](images/email-output.png)
 
 ---
 
@@ -76,22 +76,8 @@ Thanks in advance for your guidance.
 
 ---
 
-### 3) Preserve for Gmail — **Set: Email Data1**
-➜ a. Add **Set**.  
-➜ b. **Keep Only Set**: On.  
-➜ c. Add these **String** fields (exact expressions):
 
-```text
-sender  = {{ $json.sender }}
-subject = {{ $json.subject }}
-body    = {{ $json.body }}
-```
-
-➜ d. Connect **Email Data → Email Data1**.
-
----
-
-### 4) Derive fields — **Set: Extract & Clean**
+### 3) Derive fields — **Set: Extract & Clean**
 ➜ a. Add **Set**.  
 ➜ b. **Keep Only Set**: On.  
 ➜ c. Add fields exactly as below (copy-paste):
@@ -107,7 +93,7 @@ is_urgent     = {{ ($json["subject"] || "").toLowerCase().includes("urgent") }}
 
 ---
 
-### 5) First gate — **IF: Urgent + Company?** (AND)
+### 4) First gate — **IF: Urgent + Company?** (AND)
 ➜ a. Add **IF**; name it **Urgent + Company?**  
 ➜ b. Add **two** conditions:
 
@@ -126,7 +112,7 @@ Right = botcampus.com        ← use your company domain
 
 ---
 
-### 6) True branch payload — **Set: Urgent Notification1**
+### 5) True branch payload — **Set: Urgent Notification1**
 ➜ a. **Keep Only Set**: On.  
 ➜ b. Add fields:
 
@@ -138,7 +124,7 @@ message  = 🚨 URGENT: Email {{ $json.subject_clean }} from  {{ $json.sender_na
 
 ---
 
-### 7) True branch email — **Gmail: Send a message** (alert to you)
+### 6) True branch email — **Gmail: Send a message** (alert to you)
 Use your Gmail credential (e.g., **Gmail – Personal**). Set:
 
 ```text
@@ -152,7 +138,7 @@ Wire: **Urgent + Company? (true) → Urgent Notification1 → Send a message**.
 
 ---
 
-### 8) False branch second gate — **IF: Company?**
+### 7) False branch second gate — **IF: Company?**
 ➜ a. Add **IF**; name **Company?**  
 ➜ b. Single condition (same domain as Step 5):
 
@@ -166,7 +152,7 @@ Wire: **Urgent + Company? (false) → Company?**.
 
 ---
 
-### 9) Company true payload — **Set: Priority Inbox1**
+### 8) Company true payload — **Set: Priority Inbox1**
 ➜ a. **Keep Only Set**: On.  
 ➜ b. Fields:
 
@@ -178,7 +164,7 @@ message  = {{ "⚠️ Company email from " + $json["sender_name"] + " - " + $jso
 
 ---
 
-### 10) Company true email — **Gmail: Send a message1** (reply to sender)
+### 9) Company true email — **Gmail: Send a message1** (reply to sender)
 Use the same Gmail credential. Set:
 
 ```text
@@ -192,7 +178,7 @@ Wire: **Company? (true) → Priority Inbox1 → Send a message1**.
 
 ---
 
-### 11) Company false payload — **Set: Standard Queue**
+### 10) Company false payload — **Set: Standard Queue**
 ➜ a. **Keep Only Set**: On.  
 ➜ b. Fields:
 
@@ -204,7 +190,7 @@ message  = {{ "📧 External email from " + $json["sender_name"] + " - " + $json
 
 ---
 
-### 12) Sink — **No Operation, do nothing**
+### 11) Sink — **No Operation, do nothing**
 Wire: **Standard Queue → NoOp**.
 
 ---
