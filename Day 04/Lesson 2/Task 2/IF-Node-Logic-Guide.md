@@ -1,5 +1,3 @@
-#  IF Node Logic with Urgent Keyword — Demo Workflow
-
 # IF–Node Email Triage (Urgent + Domain) — n8n
 **Goal:** Route email-like data using IF logic → (Urgent+Company) alert, (Company) priority, else standard.
 
