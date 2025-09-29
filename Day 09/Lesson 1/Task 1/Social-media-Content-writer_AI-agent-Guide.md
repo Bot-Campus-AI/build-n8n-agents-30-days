@@ -1,89 +1,95 @@
-# Social‑Media Content Writer AI Agent (n8n) — **OpenRouter Chat Model**
-> Generates LinkedIn, Facebook, and Instagram articles from a single prompt, logs them to Google Sheets, and emails an HTML bundle.
+# Social‑Media Content Writer AI Agent (n8n) — OpenRouter Route
+One‑line goal: Turn one prompt into platform‑perfect posts (LinkedIn, Facebook, Instagram), log to Google Sheets, and email an HTML bundle.
 
+## At‑a‑glance outcomes
+- Chat in **n8n Chat Trigger** → 3 posts generated & split → saved to **Google Sheets** → sent via **Gmail (HTML)**
+- Clean JSON from LLM; resilient parsing in a **Code** node
+- Ready to expand to image upload and schedulers
+
+## ⚠️ Prereqs & Auth (do this first)
+- **OpenRouter API Key**: create at openrouter.ai → add **Credentials → OpenRouter** in n8n.
+- **Google Sheets (OAuth2)**: enable **Sheets + Drive** → add **Credentials → Google** with both scopes.
+- **Gmail (OAuth2)**: enable **Gmail API** → add **Credentials → Gmail**.
+
+## Architecture snapshot (nodes/tools)
+1) **Chat Trigger** → 2) **OpenRouter Chat Model** → 3) **AI Agent (System Prompt)** → 4) **Simple Memory** → 5) **Code (split JSON)** → 6) **Merge (Combine All)** → 7) **Google Sheets: Append** → 8) **Gmail: Send a message (HTML)**
 
 ---
 
-## ⚠️ Authentication (do this first)
-- **OpenRouter API Key** → Create at openrouter.ai → add credential in n8n (**OpenRouter**). Select a route (e.g., `deepseek/deepseek-chat-v3.1:free` or any `mistralai/...` model).
-- **Google Sheets (OAuth2)** → Enable Sheets & Drive → connect **Google Sheets** node.
-- **Gmail (OAuth2)** → Enable Gmail API → connect **Gmail: Send a message** node.
-
----
-
-## Power Pattern: **Input → Process → Output**
-**Prompt Here! (Chat Trigger)** ➝ **AI Agent** *(System Prompt)* + **OpenRouter Chat Model** + **Simple Memory** ➝ **Code in JavaScript** *(split to LinkedIn/Facebook/Instagram)* ➝ **Merge (combineAll)** ➝ **Google Sheets: Append** ➝ **Gmail: Send a message (HTML)**.
-
----
 ## Figure — Workflow canvas
-
 ![Workflow canvas](images/canvas.png)
 
+---
+
+## Step‑by‑Step (with inline copy‑paste blocks)
+
+### 1) Chat Trigger — “Prompt Here!”
+- Welcome message: `Tell me your topic, audience, tone, and (optional) link.`
+- Provides a stable `sessionId` for logging.
+
+**Expression to reuse in Sheets → `ID` column:**
+```
+={{ $('Prompt Here!').item.json.sessionId }}
+```
 
 ---
 
-## Node‑by‑Node (drag ➝ drop ➝ configure)
+### 2) OpenRouter Chat Model (LLM call)
+- **Credentials:** your OpenRouter key
+- **Model/Route:** `deepseek/deepseek-chat-v3.1:free` *(or any Mistral/DeepSeek route)*
+- **Temperature:** `0.7`
+- **User Message**:
+```
+={{ $('Prompt Here!').item.json.message }}
+```
 
-### 1) Prompt Here! (Chat Trigger)
-- Message field to type your **Prompt**.
-- This flows to **AI Agent** and also directly to **Merge** (keeps metadata like `sessionId`).
-
-### 2) OpenRouter Chat Model
-- **Model (route):** `deepseek/deepseek-chat-v3.1:free` *(switch to your preferred Mistral/DeepSeek route as needed)*
-- **Credential:** your OpenRouter API key.
+---
 
 ### 3) AI Agent — System Prompt
-- **Set defien Below** 
-- **System propmt**
+Paste the **System Prompt** into the node's **System** field.
 
-- **copy**
-               You are a Social Media Content Writer AI Agent for LinkedIn, Facebook, and Instagram.
+```text
+You are a Social Media Content Writer AI Agent for LinkedIn, Facebook, and Instagram.
 
 MISSION
 Turn the user's PROMPT into three platform-specific posts (separate articles) that are clear, actionable, and brand-safe. Optimize for each platform’s tone, structure, and character norms. Output must be clean JSON only (no markdown, no code fences).
 
 INPUTS (from n8n JSON)
-- PROMPT_TEXT: [Execute previous nodes for preview]
-- BRAND: [Execute previous nodes for preview]
-- AUDIENCE: [Execute previous nodes for preview]
-- LINK_URL: [Execute previous nodes for preview]
-- TONE: [Execute previous nodes for preview]
-- LANGUAGE: [Execute previous nodes for preview]
-- EXTRA_TAGS: [Execute previous nodes for preview]   // comma or space-separated optional tags
+- PROMPT_TEXT: {{ $json.message || '' }}
+- BRAND: {{ $json.brand || '' }}
+- AUDIENCE: {{ $json.audience || '' }}
+- LINK_URL: {{ $json.link || '' }}
+- TONE: {{ $json.tone || '' }}
+- LANGUAGE: {{ $json.language || 'English' }}
+- EXTRA_TAGS: {{ $json.extra_tags || '' }}
 
 CONSTRAINTS & STYLE BY PLATFORM
 1) LinkedIn
    - 120–220 words, 1–3 short paragraphs (may include a tight bullet list)
-   - Professional, value-led, minimal emojis (0–2 total), 3–8 relevant hashtags at end
-   - Add 1 clear CTA (e.g., “Comment your experience” / “Connect to learn more”)
-   - Mention LINK_URL once if provided
-
+   - Professional, value-led, minimal emojis (0–2 total), 3–8 hashtags at end
+   - Add 1 clear CTA; mention LINK_URL once if provided
 2) Facebook
-   - 60–120 words, conversational, approachable
+   - 60–120 words, conversational
    - Up to 1 emoji per sentence (optional), 3–6 hashtags
-   - CTA: “Share”, “Message us”, or “Learn more” with LINK_URL if provided
-
+   - CTA with LINK_URL if provided
 3) Instagram
-   - 80–150 words, strong hook in first 120 characters
-   - Line breaks for readability, 8–15 hashtags (mix broad + niche)
-   - 1 emoji per line (optional), CTA: “Save this”, “Follow for more”, “DM us”
-   - If LINK_URL is provided, say “Link in bio” (or include it if your account style allows)
+   - 80–150 words, strong hook in first 120 chars
+   - Line breaks, 8–15 hashtags; CTA (“Save”, “Follow”, “DM”)
+   - If LINK_URL provided: say “Link in bio” unless your style allows the link
 
 WHAT TO INCLUDE IN EVERY POST
 - Title/headline that fits the platform
 - Core value/insight customized to AUDIENCE
 - One specific CTA
-- 3–5 image_ideas (photography or graphic concepts)
+- 3–5 image_ideas
 - Hashtags as an ARRAY (not inline text)
 - Keep brand-safe; don’t invent facts; use LANGUAGE
-- If LINK_URL exists, integrate naturally (LI/FB direct; IG: “link in bio” unless allowed)
+- If LINK_URL exists, integrate naturally
 
 SECTION: PROMPT
 Echo the user’s prompt in the final JSON as "prompt_echo" so we can archive it in Sheets.
 
-OUTPUT FORMAT (STRICT JSON ONLY — NO MARKDOWN, NO FENCES)
-Return exactly this structure:
-
+OUTPUT FORMAT (STRICT JSON ONLY)
 {
   "project": "social-posts",
   "prompt_echo": "<verbatim copy of PROMPT_TEXT>",
@@ -94,9 +100,9 @@ Return exactly this structure:
     {
       "platform": "LinkedIn",
       "title": "<headline>",
-      "body": "<post text, plain text, with line breaks where needed>",
+      "body": "<post text>",
       "hashtags": ["#Example", "#Another"],
-      "cta": "<one clear CTA>",
+      "cta": "<one CTA>",
       "image_ideas": ["<idea1>", "<idea2>", "<idea3>"],
       "link": "<LINK_URL or ''>",
       "word_count": <integer>
@@ -106,7 +112,7 @@ Return exactly this structure:
       "title": "<headline>",
       "body": "<post text>",
       "hashtags": ["#Example"],
-      "cta": "<one clear CTA>",
+      "cta": "<one CTA>",
       "image_ideas": ["<idea1>", "<idea2>", "<idea3>"],
       "link": "<LINK_URL or ''>",
       "word_count": <integer>
@@ -116,18 +122,15 @@ Return exactly this structure:
       "title": "<hook-style headline>",
       "body": "<post text with line breaks>",
       "hashtags": ["#Example"],
-      "cta": "<one clear CTA>",
+      "cta": "<one CTA>",
       "image_ideas": ["<idea1>", "<idea2>", "<idea3>"],
       "link": "<LINK_URL or ''>",
       "word_count": <integer>
     }
   ],
-
-  // Convenience payload for Google Sheets "Append" (one row per platform)
-  // Join arrays for easy single-cell storage.
   "rows": [
     {
-      "timestamp": "[DateTime: 2025-09-17T00:23:02.110-04:00]",
+      "timestamp": "{{ $now }}",
       "platform": "LinkedIn",
       "title": "<title>",
       "body": "<body>",
@@ -140,7 +143,7 @@ Return exactly this structure:
       "prompt_echo": "<PROMPT_TEXT>"
     },
     {
-      "timestamp": "[DateTime: 2025-09-17T00:23:02.110-04:00]",
+      "timestamp": "{{ $now }}",
       "platform": "Facebook",
       "title": "<title>",
       "body": "<body>",
@@ -153,7 +156,7 @@ Return exactly this structure:
       "prompt_echo": "<PROMPT_TEXT>"
     },
     {
-      "timestamp": "[DateTime: 2025-09-17T00:23:02.111-04:00]",
+      "timestamp": "{{ $now }}",
       "platform": "Instagram",
       "title": "<title>",
       "body": "<body>",
@@ -167,21 +170,21 @@ Return exactly this structure:
     }
   ]
 }
-
 VALIDATION
 - Return ONLY valid JSON. No explanations, no markdown, no backticks.
-- Arrays must be real arrays (e.g., ["#tag1","#tag2"]), not strings.
-- Keep within platform word/hashtag guidance above.
-- If a field is unknown, return an empty string ("").
+- Arrays must be arrays, not strings.
+- If unknown, use "".
+```
 
--**Upto here**
+---
 
 ### 4) Simple Memory
-- **Type:** Buffer Window, **Context Window Length:** 15 (keeps recent chat turns).
+- **Type:** Buffer Window, **Window length:** `15`.
 
-### 5) Code in JavaScript — **Split AI output**
-Paste this exact code to extract the three platform texts:
+---
 
+### 5) Code (Function) — Split AI Output
+Paste into a **Function** node:
 ```javascript
 /** n8n Function node: split AI output into LinkedIn/Facebook/Instagram */
 function getRaw(llm){if(!llm)return'';if(typeof llm==='string')return llm;if(llm.output)return String(llm.output);if(llm.text)return String(llm.text);if(llm.data)return String(llm.data);if(Array.isArray(llm.choices)){const c0=llm.choices[0];if(c0?.message?.content)return String(c0.message.content);if(c0?.text)return String(c0.text)}return''}
@@ -196,55 +199,103 @@ function fromHeadings(raw){const out={LinkedIn:'',Facebook:'',Instagram:''};cons
 const out=[];for(const item of items){const j=item.json||{};const ID=pickId(j);let raw=getRaw(j);raw=stripCodeFences(raw);let obj=tryParseJson(raw);let L='',F='',I='';if(obj){const s=fromJson(obj);L=s.LinkedIn;F=s.Facebook;I=s.Instagram}if(!L&&!F&&!I&&raw){const s=fromHeadings(raw);L=s.LinkedIn;F=s.Facebook;I=s.Instagram}out.push({json:{ID,LinkedIn:L||'',Facebook:F||'',Instagram:I||''}})}return out;
 ```
 
-### 6) Merge (combineAll)
-- **Mode:** Combine → **Combine All** (joins the Chat Trigger metadata with split output).
+---
+
+### 6) Merge — Combine All
+- **Mode:** **Combine** → **Combine All**.
+
+---
 
 ### 7) Google Sheets — Append
-- **Document:** your Sheet URL (gid=0)
-- **Sheet Name:** `Sheet1`
-- **Columns (Define Below):**
-  - `ID` → `={{ $('Prompt Here !').item.json.sessionId }}`
-  - `LinkedIN` → `={{ $json.LinkedIn }}`
-  - `Facebook` → `={{ $json.Facebook }}`
-  - `Instagram` → `={{ $json.Instagram }}`
----
-## sheet pic 
+- **Spreadsheet:** your Sheet URL
+- **Sheet name:** `Sheet1`
+- **Map columns**:
 
+`ID`:
+```
+={{ $('Prompt Here!').item.json.sessionId }}
+```
+`LinkedIn`:
+```
+={{ $json.LinkedIn }}
+```
+`Facebook`:
+```
+={{ $json.Facebook }}
+```
+`Instagram`:
+```
+={{ $json.Instagram }}
+```
+
+**Figure — Google Sheets rows**
 ![Google Sheets rows](images/sheet-rows.png)
-*Figure — Google Sheets rows.*
+
+---
 
 ### 8) Gmail — Send a message (HTML)
-- **To:** `jashwanthboddupally@gmail.com, support@botcampus.ai`
-- **Subject:** `AGENTIC AI  - CONTENT WRITER For Social media`
-- **Email Type:** HTML
-- **Message:** Use the HTML template that injects `{{$json.LinkedIN}}`, `{{$json.Facebook}}`, `{{$json.Instagram}}` into three blocks.
+- **To:** you@yourmail.com
+- **Subject:** `AGENTIC AI – Social Content Pack`
+- **Email Type:** **HTML**
+- **Body HTML** (bind post outputs):
 
----
-## output
+```html
+<!doctype html>
+<html>
+  <body style="margin:0;padding:24px;background:#f6f7f9;font-family:Inter,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+      <tr><td align="center">
+        <table role="presentation" width="680" cellspacing="0" cellpadding="0" style="max-width:680px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="background:#0ea5e9;color:#fff;padding:18px 22px;font-size:18px;font-weight:600;">
+              Social Content Bundle (LinkedIn • Facebook • Instagram)
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 22px;">
+              <h3 style="margin:0 0 8px;font-size:16px;">LinkedIn</h3>
+              <pre style="white-space:pre-wrap;font-family:inherit;line-height:1.5;margin:0 0 16px;">{{ $json.LinkedIn }}</pre>
+
+              <h3 style="margin:0 0 8px;font-size:16px;">Facebook</h3>
+              <pre style="white-space:pre-wrap;font-family:inherit;line-height:1.5;margin:0 0 16px;">{{ $json.Facebook }}</pre>
+
+              <h3 style="margin:0 0 8px;font-size:16px;">Instagram</h3>
+              <pre style="white-space:pre-wrap;font-family:inherit;line-height:1.5;margin:0;">{{ $json.Instagram }}</pre>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 22px;color:#64748b;font-size:12px;border-top:1px solid #e5e7eb;">
+              Generated by n8n • OpenRouter • {{ $now }}
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>
+```
+
+**Figure — HTML email preview**
 ![HTML email preview](images/email-preview.png)
-*Figure — HTML email preview.*
 
 ---
 
 ## How to Run
-1. Set credentials (OpenRouter, Sheets OAuth2, Gmail OAuth2).
-2. **Activate** the workflow → click **Open chat** on the canvas.
-3. Enter a prompt (topic + audience + tone). 
-4. Inspect **Code** node output for `LinkedIn/Facebook/Instagram` text.
-5. Confirm Google Sheets row append and email delivery.
-
----
+1) Test all three credentials.  
+2) **Activate** workflow → **Open chat**.  
+3) Send a prompt (topic + audience + tone + optional link).  
+4) Verify **Function** node output.  
+5) Confirm Sheet row + Inbox email.
 
 ## Troubleshooting
-- **Empty platform fields:** Check the AI Agent returns valid JSON (`posts[]` or `rows[]`). The Function node has a plain-text fallback.
-- **Sheets not updating:** Ensure the service account has edit access and the sheet/tab names match.
-- **Gmail HTML looks plain:** Verify **Email Type** is **HTML**.
+- **LLM returns markdown/fences:** handled by code; keep JSON‑only in System Prompt.
+- **Empty posts:** ensure Agent returns `posts[]` or `rows[]`.
+- **Sheets not updating:** share access, correct tab name, use **Append**.
+- **Email shows raw `{{ }}`:** set **Email Type** to **HTML**.
 
 ---
 
 ## Files in this package
-- `workflow.json` — exported n8n workflow (OpenRouter + AI Agent + Sheets + Gmail).
-- `Guide.md` — this step-by-step mockdown.
+- `workflow.json` — importable n8n skeleton with all nodes wired.
+- `Guide.md` — this step‑by‑step guide.
 - `images/` — screenshots (canvas, email preview, sheet rows).
-
-_Packaged on: 2025-09-16T12:57:28_
