@@ -1,261 +1,123 @@
-# HTTP Requests — Sending Data with POST (n8n)
+# HTTP POST — Basic Demo (n8n)
+One‑line goal: Send a JSON payload from n8n to a public test API, then format a clean response.
 
-Audience: First‑time n8n users and non‑technical readers. Each step is split into clear sub‑steps with `+` and `→` indicators. Drag‑and‑drop requirements are explicitly noted.
+## At‑a‑glance outcomes
+- Build a JSON body with **Set** → POST it with **HTTP Request** → prettify output with **Set**.  
+- Learn the exact **jsonParameters** + `={{ $json }}` pattern for POSTing clean JSON.  
+- Get a predictable “saved (simulated)” response you can reuse in bigger flows.
 
----
+## Prereqs & Auth (do this first)
+- **n8n**: Cloud or self‑hosted (any recent version).  
+- **Public URL / HTTPS**: Not required for this manual demo.  
+- **API keys**: **None** needed. We use **JSONPlaceholder** (mock API).  
+  - Note: It **simulates** persistence and always returns a fake `id`. Good for testing only.
 
-## Concept
-
-HTTP requests are like sending letters. For a POST request, you are saying: "Here's some data to save."
-
----
-
-## Goal
-
-Build a simple workflow that sends a JSON payload to a public API using **POST**, and reads the response.
-
-Workflow overview:
-```
-Manual Trigger → Set (Build Payload) → HTTP Request (POST) → Set (Format Response) [optional]
-```
-
-Expected response (example from JSONPlaceholder):
-```json
-{
-  "name": "Asha",
-  "note": "Here's some data to save",
-  "priority": "high",
-  "category": "onboarding",
-  "id": 101
-}
-```
+## Architecture snapshot (nodes & tools)
+1) **Manual Trigger** (`id: 1`)  
+2) **Set (Build Payload)** (`id: 2`) → creates `name`, `note`, `priority`, `category`  
+3) **HTTP Request (POST)** (`id: 3`) → POST to a mock API, body = `={{ $json }}`  
+4) **Set (Format Response)** (`id: 4`) → returns `message`, `echoed_name`, `echoed_note`, `post_id`  
 
 ---
 
-## Prerequisites
+## Step‑by‑Step
 
-```text
-+ n8n is running (default local URL: http://localhost:5678)
-+ You can open the n8n Editor (canvas view)
-+ Internet access is available
-```
+### 1) Create the workflow
+➜ a. Click **+ New** → add **Manual Trigger**.  
+➜ b. Rename to **Manual Trigger** (optional).  
+➜ c. **Save**.
 
-Key terms:
-```text
-+ Node  → a block that performs one task (trigger, set, request, format)
-+ Canvas → the whiteboard area where you place and connect nodes
-+ Connection → the line from one node’s output to another node’s input
-```
+### 2) Build the payload (**Set** node)
+➜ a. Add a **Set** node; name it **Set (Build Payload)**.  
+➜ b. In **Mode**, keep **Keep Only Set** = **ON**.  
+➜ c. Under **Values → String**, add four rows:  
+   - **name** → `Asha`  
+   - **note** → `Here's some data to save`  
+   - **priority** → `high`  
+   - **category** → `onboarding`  
+➜ d. **Save**.  
+*Ref: images/02-set-payload.png*
 
----
+**Key parameters (Set — Build Payload)**
 
-## STEP 1 — Create a New Workflow  (drag‑and‑drop: not required)
+| Field | Value |
+|---|---|
+| Keep Only Set | **ON** |
+| Strings | name=`Asha`, note=`Here's some data to save`, priority=`high`, category=`onboarding` |
 
-### Do
-```text
-+ Open the n8n Editor
-  → Click “New” to start a blank workflow
-  → Click the Untitled name at top‑left and rename to: HTTP POST — Basic Demo
-  → Click Save (or ensure Auto‑save is enabled)
-```
+### 3) Send the POST (**HTTP Request**)
+➜ a. Add **HTTP Request**; name it **HTTP Request (POST)**.  
+➜ b. **Method** → **POST**.  
+➜ c. **URL** → `https://jsonplaceholder.typicode.com/posts`  
+➜ d. Toggle **Send Body as JSON / jsonParameters** → **ON**.  
+➜ e. **Body Parameters (JSON)** → use expression **exactly**: `={{ $json }}`  
+➜ f. **Send Binary Data** → **OFF**.  
+➜ g. **Save**.  
+*Ref: images/03-http-post.png*
 
-### Verify
-```text
-+ You see an empty canvas
-+ The left panel shows the node search and list
-```
+**Key parameters (HTTP Request)**
 
----
+| Field | Value |
+|---|---|
+| Request Method | **POST** |
+| URL | `https://jsonplaceholder.typicode.com/posts` |
+| jsonParameters | **ON** |
+| Body Parameters (JSON) | `={{ $json }}` |
+| Send Binary Data | **OFF** |
 
-## STEP 2 — Add the Manual Trigger Node  (drag‑and‑drop: required)
+### 4) Format the output (**Set** node)
+➜ a. Add another **Set**; name it **Set (Format Response)**.  
+➜ b. **Keep Only Set** = **ON**.  
+➜ c. **Strings**:  
+   - **message** → `Saved successfully (simulated)`  
+   - **echoed_name** → `={{ $json["name"] }}`  
+   - **echoed_note** → `={{ $json["note"] }}`  
+➜ d. **Number**:  
+   - **post_id** → `={{ $json["id"] }}`  
+➜ e. **Save**.  
+*Ref: images/04-format-response.png*
 
-### Do
-```text
-+ In the left panel search, type: Manual Trigger
-  → Drag Manual Trigger onto the canvas
-  → Place it near the left edge (start of the flow)
-```
+**Key parameters (Set — Format Response)**
 
-### Configure
-```text
-+ No configuration needed (defaults are fine)
-```
+| Field | Value |
+|---|---|
+| Keep Only Set | **ON** |
+| Strings | message=`Saved successfully (simulated)`, echoed_name=`={{ $json["name"] }}`, echoed_note=`={{ $json["note"] }}` |
+| Number | post_id=`={{ $json["id"] }}` |
 
-### Verify
-```text
-+ Manual Trigger node appears without warnings
-```
-
----
-
-## STEP 3 — Add a Set Node (Build Payload)  (drag‑and‑drop + connection: required)
-
-### Do
-```text
-+ In the left panel search, type: Set
-  → Drag Set onto the canvas
-  → Drop it to the right of Manual Trigger
-  → Create a connection:
-    + Click the right dot of Manual Trigger
-    + Drag the arrow to the left dot of Set until it snaps
-```
-
-### Configure (Node configuration — key fields)
-```text
-+ Click the Set node
-  → Keep Only Set : ON
-  → Add fields:
-    + string → name     = Asha
-    + string → note     = Here's some data to save
-    + string → priority = high
-    + string → category = onboarding
-```
-
-### Verify
-```text
-+ Select the Set node → Click Execute Node
-  → Output shows only: name, note, priority, category
-```
+### 5) Connect nodes (in order)
+**Manual Trigger** → **Set (Build Payload)** → **HTTP Request (POST)** → **Set (Format Response)**.  
+*Ref: images/01-canvas.png*
 
 ---
 
-## STEP 4 — Add HTTP Request (POST)  (drag‑and‑drop + connection: required)
+## Testing & validation
+1) Open the workflow → click **Execute Workflow**.  
+2) Inspect **HTTP Request (POST)** → **Output** should show your payload plus a new `id`.  
+3) Inspect **Set (Format Response)** → you should see a clean summary with `message`, `echoed_*`, `post_id`.  
+4) Change **Set (Build Payload)** values (e.g., name=`Ravi`) → run again → verify changes flow through.
 
-### Do
-```text
-+ In the left panel search, type: HTTP Request
-  → Drag HTTP Request onto the canvas
-  → Drop it to the right of Set
-  → Connect Set → HTTP Request using the arrow drag method
-```
-
-### Configure (Node configuration — key fields)
-```text
-+ Click the HTTP Request node
-  → Request Method    : POST
-  → URL               : https://jsonplaceholder.typicode.com/posts
-  → Response Format   : JSON
-  → Send              : JSON (enable “JSON/Raw Parameters” mode)
-  → Body (JSON)       : ={{ $json }}
-    (Explanation: this passes the entire JSON from the previous Set node as the POST body)
-  → Authentication    : (leave empty for this demo)
-  → Headers           : (not required; Content‑Type is set automatically when sending JSON)
-```
-
-Optional settings (use only if needed):
-```text
-+ Options → Timeout        → increase if API is slow
-+ Options → Ignore SSL     → keep OFF unless required
-```
-
-### Test this node alone (recommended)
-```text
-+ Select the HTTP Request node
-  → Click Execute Node
-  → Open the JSON output tab
-  → Confirm the API response echoes your data and includes an id (e.g., 101)
-```
-
-Troubleshooting:
-```text
-+ Non‑200/201 code? → Read the response body for details
-+ No output?        → Re‑run; confirm internet connectivity
-```
+**Notes**
+- This is a **manual** run. No webhook/activation required.  
+- Asia/Kolkata (IST) timezone doesn’t affect this demo (no dates involved).
 
 ---
 
-## STEP 5 — Add a Set Node (Format Response) [optional]  (drag‑and‑drop + connection: required)
-
-### Do
-```text
-+ In the left panel search, type: Set
-  → Drag Set onto the canvas
-  → Drop it to the right of HTTP Request
-  → Connect HTTP Request → Set (Format Response)
-```
-
-### Configure (Node configuration — key fields)
-```text
-+ Click the Set node
-  → Keep Only Set : ON
-  → Add fields:
-    + string → message        = Saved successfully (simulated)
-    + string → echoed_name    = ={{ $json["name"] }}
-    + string → echoed_note    = ={{ $json["note"] }}
-    + number → post_id        = ={{ $json["id"] }}
-```
-
-### Verify
-```text
-+ Select the Set (Format Response) node → Click Execute Node
-  → Output shows: message, echoed_name, echoed_note, post_id
-```
+## Troubleshooting (top fixes)
+- **Wrong body / empty body** → Ensure **jsonParameters = ON** and **Body Parameters (JSON)** is `={{ $json }}` (expression, not a quoted string).  
+- **Expression shows as a string** → Remove quotes; it must render **purple** in n8n.  
+- **Unexpected fields** → Confirm you used **Keep Only Set = ON** in both **Set** nodes.  
+- **404 or 405** → Double‑check URL and **POST** method.  
+- **ECONNREFUSED / network error** → Check internet/DNS; try again or test URL in a browser.  
+- **Undefined key in Format node** → Make sure the key names (`name`, `note`) match the response shape from the HTTP node.
 
 ---
 
-## STEP 6 — Run the Entire Workflow
-
-### Do
-```text
-+ Click Execute Workflow (top‑right)
-  → Observe execution:
-    Manual Trigger → Set (Build Payload) → HTTP Request (POST) → Set (Format Response)
-```
-
-### Verify
-```text
-+ If the format node is present, final output shows:
-  {
-    "message": "Saved successfully (simulated)",
-    "echoed_name": "Asha",
-    "echoed_note": "Here's some data to save",
-    "post_id": 101
-  }
-+ If the format node is not present, check the HTTP Request node output directly
-```
-
----
-
-## Visual Layout (text mock diagram)
-
-```
-[Manual Trigger] → [Set (Build Payload)] → [HTTP Request (POST)] → [Set (Format Response)]
-```
-
-Legend:
-```text
-+ Square brackets [] are nodes
-+ The arrow shows the connection you create by dragging from one node’s dot to the next
-```
-
----
-
-## Common Errors and Fixes
-
-```text
-+ 401 / 403 Unauthorized / Forbidden
-  → Not expected for JSONPlaceholder; for your own API, configure Authentication/Headers
-
-+ 404 Not Found
-  → Check the URL
-
-+ 415 Unsupported Media Type
-  → Ensure “Send: JSON” is enabled or set Content‑Type: application/json
-
-+ 429 Too Many Requests
-  → Public API rate limit; wait and retry
-
-+ Empty or malformed JSON
-  → Ensure Response Format is JSON and the endpoint returns JSON
-```
-
----
-
-## Summary
-
-```text
-+ Manual Trigger starts the run
-+ Set builds a clean JSON payload
-+ HTTP Request (POST) sends it to the API
-+ Optional Set formats the response into a tidy summary
-```
+## What to deliver (repo checklist)
+- Short summary of purpose (one paragraph).  
+- Node list with order and key parameters (tables above).  
+- Screenshots (optional):  
+  - images/01-canvas.png — full workflow  
+  - images/02-set-payload.png — Set (Build Payload)  
+  - images/03-http-post.png — HTTP Request config  
+  - images/04-format-response.png — Set (Format Response)  
