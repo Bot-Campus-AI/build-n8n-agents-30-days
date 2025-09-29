@@ -1,145 +1,87 @@
-# Task 2 — Sheet Connections (n8n Form → Google Sheets)
+# README.md
 
+# Daily Standup → Google Sheets (n8n Form to Sheet)
+One-line goal: Collect a Daily Tech Standup via an **n8n Form** and append each submission as a new row in **Google Sheets**.
 
+## At-a-glance outcomes
+- Shareable **Form URL** (e.g., `https://YOUR_N8N/forms/standup`)
+- Each submission → **one new row** in Google Sheets (tab **Standups**)
+- Auto timestamp via `{{$now}}` (ISO)
 
----
+## Prereqs & Auth (do this first)
+- **Google Cloud Console**
+  - Enable **Google Sheets API** for your project
+- **n8n → Credentials**
+  - Create **Google Sheets OAuth2 API** (or **Google API**)
+  - **Redirect URI** → `https://YOUR_N8N_DOMAIN/rest/oauth2-credential/callback`
+  - Connect → approve Google scopes
+- **Sheet access**: the Google account used in n8n must have access to the target spreadsheet
 
-## Important Note (Before You Start)
+## Architecture snapshot (nodes/tools)
+- **Form Trigger** → **Google Sheets (Append Row)**
+- *(Optional)* **Set** (if you want to pre-create `date_iso = {{$now}}`)
 
-```text
-+ You must authenticate with Google in n8n (Credentials → Google → Google Sheets).
-+ In Google Cloud Console, enable the "Google Sheets API" for your project.
-+ During OAuth setup, add the redirect URI:
-  https://<your-n8n-host>/rest/oauth2-credential/callback
-```
+## Step-by-Step
+1) **Create the Google Sheet**
+   ➜ a. Create spreadsheet: **Daily Standup Log**  
+   ➜ b. Rename first tab: **Standups**  
+   ➜ c. Row-1 headers (exactly):  
+   `employee_name | email | date_iso | project | yesterday | today | blockers | priority | tags`  
+   ➜ d. Copy the **full spreadsheet URL** (we’ll paste in n8n)
 
----
+2) **Build the Form (Form Trigger)**
+   ➜ a. Drag **Form Trigger** to canvas → open settings  
+   ➜ b. **Path**: `forms/standup`  
+   ➜ c. **Form Title**: `Daily Tech Standup`  
+   ➜ d. **Description**: `Quick daily report for the engineering team`  
+   ➜ e. **Fields** (Name must match exactly)
+      - Employee Name → **Text**, required, **Name**: `employee_name`  
+      - Email → **Email**, required, **Name**: `email`  
+      - Project → **Text**, required, **Name**: `project`  
+      - Yesterday → **Textarea**, required, **Name**: `yesterday`  
+      - Today → **Textarea**, required, **Name**: `today`  
+      - Blockers → **Textarea**, optional, **Name**: `blockers`  
+      - Priority → **Select**, required, **Name**: `priority`, options: `low, medium, high`  
+      - Tags → **Text**, optional, **Name**: `tags` (comma-separated)
 
-## Goal
+3) **Append to Google Sheets**
+   ➜ a. Drag **Google Sheets** node to canvas (right of Form)  
+   ➜ b. Connect **Form Trigger → Google Sheets**  
+   ➜ c. **Resource**: `Sheet Within Document`  
+   ➜ d. **Operation**: `Append Row`  
+   ➜ e. **Document**: `By URL` → paste the spreadsheet URL  
+   ➜ f. **Sheet**: `Standups`  
+   ➜ g. **Mapping Mode**: `Map Each Column Manually`  
+   ➜ h. **Value Input Mode**: `RAW`  
+   ➜ i. **Values to Send** (copy-paste from the block below)
+   employee_name = ={{ $json["employee_name"] }}
+email = ={{ $json["email"] }}
+date_iso = ={{ $now }}
+project = ={{ $json["project"] }}
+yesterday = ={{ $json["yesterday"] }}
+today = ={{ $json["today"] }}
+blockers = ={{ $json["blockers"] }}
+priority = ={{ $json["priority"] }}
+tags = ={{ $json["tags"] }}
 
-Collect a **Daily Tech Standup** using an **n8n Form**, then **append each submission as a new row** in a Google Sheet.
+## Copy-Paste blocks (complete)
+### Google Sheets → Values to Send (each column mapping)
+### (Optional) Set node between Form and Sheets
+Field: date_iso
+Value: ={{ $now }}
+Then in Sheets map: `date_iso = ={{ $json["date_iso"] }}`
 
-**Flow (text mockup)**
-```
-[Form Trigger] → [Google Sheets: Append Row]
-```
-
----
-
-## STEP 0 — Create the Google Sheet (manual)
-
-### Do
-```text
-+ Open Google Sheets → New sheet
-  → Rename spreadsheet: Daily Standup Log
-  → Rename first tab (sheet): Standups
-  → Add headers in Row 1 (exactly):
-    employee_name | email | date_iso | project | yesterday | today | blockers | priority | tags
-```
-### Copy its URL
-```text
-+ From your browser address bar, copy the full spreadsheet URL
-  (we will paste it into the Google Sheets node as "By URL")
-```
-
-**Example of a filled sheet (illustrative):**
-![Sheet result](sandbox:/mnt/data/Screenshot 2025-09-10 at 3.02.46 PM.png)
-
----
-
-## STEP 1 — Form Trigger (collect inputs)  (drag‑and‑drop: required)
-
-### Do
-```text
-+ Left panel search: Form Trigger
-  → Drag to canvas (leftmost)
-  → Click to configure
-```
-
-### Configure (fields for a daily tech use case)
-```text
-+ Path        : forms/standup
-+ Form Title  : Daily Tech Standup
-+ Description : Quick daily report for the engineering team
-+ Fields (Add Field for each):
-  → Employee Name   (Text, required)     → Name: employee_name
-  → Email           (Email, required)    → Name: email
-  → Project         (Text, required)     → Name: project
-  → Yesterday       (Textarea, required) → Name: yesterday
-  → Today           (Textarea, required) → Name: today
-  → Blockers        (Textarea, optional) → Name: blockers
-  → Priority        (Select, required)   → Name: priority (options: low, medium, high)
-  → Tags            (Text, optional)     → Name: tags (comma separated)
-```
-**Tip**
-```text
-+ You can also add a read‑only hidden field "date_iso" using a Set node later (={{ $now }}) — or ask the user to pick a date.
-```
-
-**Reference (UI preview)**
-![Form + mapping preview](sandbox:/mnt/data/FE8429A5-7111-4E42-9001-B8094A3CA390.png)
-
----
-
-## STEP 2 — Google Sheets: Append Row  (drag‑and‑drop + connection: required)
-
-### Do
-```text
-+ Left panel search: Google Sheets
-  → Drag to the canvas (right of Form Trigger)
-  → Connect: Form Trigger → Google Sheets
-```
-
-### Configure (Append Row)
-```text
-+ Resource            : Sheet Within Document
-+ Operation           : Append Row
-+ Document            : By URL → paste the spreadsheet URL from STEP 0
-+ Sheet               : From list → Standups
-+ Mapping Column Mode : Map Each Column Manually
-+ Values to Send      :
-  → employee_name = ={{ $json["employee_name"] }}
-  → email        = ={{ $json["email"] }}
-  → date_iso     = ={{ $now }}
-  → project      = ={{ $json["project"] }}
-  → yesterday    = ={{ $json["yesterday"] }}
-  → today        = ={{ $json["today"] }}
-  → blockers     = ={{ $json["blockers"] }}
-  → priority     = ={{ $json["priority"] }}
-  → tags         = ={{ $json["tags"] }}
-```
-
-
----
-
-## STEP 3 — Run and Verify
-
-```text
-+ Click Save
-+ Click Execute workflow (top‑right)
-+ Click “Open form” on Form Trigger → fill and submit
-+ Verify a new row appears in your Google Sheet (tab: Standups)
-```
-
----
+## Testing & Validation
+1) **Save** the workflow  
+2) **Execute workflow**  
+3) In **Form Trigger**, click **Open form** → fill and **Submit**  
+4) Open the spreadsheet → **Standups** tab → confirm a **new row**  
+5) Validate ISO timestamp, priority value, and optional fields
 
 ## Troubleshooting
-
-```text
-+ "No permission" or auth popup fails:
-  → Recreate the Google credential and ensure Sheets API is enabled.
-+ Sheet not found:
-  → Make sure you used "By URL" and the account has access to the file.
-+ Mapped field empty in the row:
-  → Check the exact form "Name" matches the key used in expressions.
-+ Wrong tab:
-  → Ensure the selected Sheet is "Standups" (matches your tab name).
-```
-
----
-
-## Starter Workflow JSON (import‑ready)
-
-> Import via **n8n → Import → Paste JSON**. After import, open the **Google Sheets** node and select/finish your Google credential. If your n8n version shows slightly different Google node fields, re‑select the same operation and remap columns in the UI.
-
+- **Auth popup fails / permission denied** → Reconnect Google credential; ensure **Sheets API** is enabled; confirm account access to spreadsheet  
+- **Sheet not found / wrong tab** → Use **Document = By URL** and **Sheet = Standups** (tab name must match)  
+- **Empty columns** → Form **Name** must match expression key (e.g., `employee_name`)  
+- **High volume / bursts** → Insert a short **Wait** (250–500 ms) before Sheets node  
+- **Form URL 404** → Check **Path** and set workflow **Active** for production
 
