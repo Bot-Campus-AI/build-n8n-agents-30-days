@@ -30,7 +30,7 @@
 ➜ **AI Agent (Gemini)** → **Gmail: Send a message**  
 ➜ **Google Sheets: Append row**
 
-![Workflow Canvas](images/canvas")
+![Workflow Canvas](images/canvas.png")
 
 ---
 
@@ -299,7 +299,7 @@ Order_status = {{ $json.body.order_status }}
 - **AI Agent** → Prompt Type **Define**; paste System/Prompt; connect **Gemini → AI Agent (Language Model)** and **Edit Fields → AI Agent (Main)**
 
 **Expected output (Gmail-ready email body):**  
-![Email Confirmation](images/Email")
+![Email Confirmation](images/Email.png")
 
 ### 4) Email — **Gmail: Send a message**
 - **To:** your test email  
@@ -328,7 +328,7 @@ ORDER STATUS  → {{ $json.Order_status }}
 ```
 
 **Result in Sheets:**  
-![Sheets Row](images/sheets")
+![Sheets Row](images/sheets.png")
 
 ---
 
