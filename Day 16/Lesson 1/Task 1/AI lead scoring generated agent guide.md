@@ -1,90 +1,89 @@
-# AI Lead Scoring Agent (n8n) — Ultra‑Clear Workshop
+# AI Lead Scoring Agent (n8n) — Professional Build Guide
 
-**Goal:** Collect a lead via a form, compute a **0–100 score** with an AI rubric, then:
+**Goal:** Collect a lead via a form, calculate a **0–100 score** using an AI rubric, and route:
 - **Score ≥ 60** → send a rich HTML **email** to your team.
 - **Score < 60** → **append** the lead to **Google Sheets** for nurture.
 
 ---
 
-## S — Setup (what you need to get this done)
-- **n8n** (Cloud or self-hosted) with access to the node panel.
-- **OpenAI** credential in n8n (API key).
-- **Google** credentials in n8n:
+## 1) Prerequisites
+- **n8n** (Cloud or self‑hosted).
+- **Credentials in n8n → Settings → Credentials:**
+  - **OpenAI** (API key).
   - **Gmail OAuth2** (to send the summary email).
   - **Google Sheets OAuth2** (to append rows).
-- A Google Sheet with columns (first row headers):  
-  `Lead Score | Name | Email | Company name | Industry | Company size | Annual revenue | submittedAt`
-- Timezone doesn’t affect scoring, but your form timestamps will use n8n’s server TZ.
-- (Optional but recommended) Make dropdown labels tidy (no trailing spaces, consistent spelling).
-
-> Done right if: n8n shows connected credentials and you can open your Sheet and Gmail from the nodes.
+- **Google Sheet headers (row 1) — create these exactly:**
+  ```text
+  Lead Score | Name | Email | Company name | Industry | Company size | Annual revenue | submittedAt
+  ```
+- Keep your form dropdown labels tidy (no trailing spaces). We handle minor differences in-flow.
 
 ---
 
-## U — Understand (architecture at a glance)
+## 2) Architecture (high level)
+1. **Form Trigger** collects the lead.
+2. **Set** normalizes fields for the model.
+3. **OpenAI Chat Model** provides the LLM.
+4. **Agent** computes the score (single integer).
+5. **Merge** combines score + original form data.
+6. **If** gates on the score.
+7. **Gmail** sends the summary email (true branch).
+8. **Google Sheets** appends the lead (false branch).
 
-1. **Form Trigger** → collects lead info.  
-2. **Set (Filtering data)** → normalizes fields for the model.  
-3. **OpenAI Chat Model** → provides the LLM.  
-4. **Agent (AI Score calculator)** → returns a single integer score.  
-5. **Merge** (combine) → combines score with original submission.  
-6. **If** → routes by score threshold (≥ 60).  
-7. **Gmail** → send summary email (TRUE branch).  
-8. **Google Sheets** → append row (FALSE branch).
-
-**Canvas**  
+**Canvas preview**  
 ![Workflow canvas](images/canvas.png)
 
 ---
 
-## P — Prepare (form + sheet)
+## 3) Build the workflow (drag & drop + exact settings)
 
-### 1) Create the Form (Form Trigger node)
-- **Title:** `Lead scoring Agent`
-- **Fields (exact labels to match your current flow):**
-  - `Name ` *(note: trailing space — keep or remove, we handle both)*
-  - `Email` *(Email type, Required)*
+### Step 1 — Form Trigger
+- **Drag**: *Form Trigger* to the canvas.
+- **Form title:** `Lead scoring Agent`
+- **Fields (use these labels):**
+  - `Name ` *(note: a trailing space may already exist in your form — keep or remove; we read both)*
+  - `Email` *(type: Email, Required)*
   - `Company name` *(Required)*
-  - `Industry` *(Dropdown, Required — use your options)*
-  - `Company size` *(Dropdown, Required — use your options)*
-  - `Annual revenue` *(Dropdown — use your options)*
-
-### 2) Create or open your Google Sheet
-- Put the columns exactly as listed above (the **Append** mapping relies on them).
+  - `Industry` *(Dropdown, Required — use your list)*
+  - `Company size` *(Dropdown, Required — use your list)*
+  - `Annual revenue` *(Dropdown — use your list)*
 
 ---
 
-## E — Execute (drag & drop, modes, operations)
-
-### Step A — **On form submission** (Form Trigger)
-- **Drag**: *Form Trigger* → canvas.
-
-### Step B — **Filtering data** (Set)
-- **Drag**: *Set* → name it **Filtering data**.
+### Step 2 — Set (Filtering data)
+- **Drag**: *Set* → rename to **Filtering data**.
 - **Connect**: *Form Trigger → Filtering data*.
-- **Mode:** *Keep Only Set*.
-- **Assignments** (click ⚙️ → *Add Expression* for values):
-  - **industry** = `={{ String($json.Industry || '').trim() }}`
-  - **company_size_label** = `={{ String($json['Company size'] || '').trim() }}`
-  - **annual_revenue_label** = `={{ String($json['Annual revenue'] || '').trim() }}`
-  - **name** = `={{ $json['Name '] || $json.Name || '' }}`
-  - **email** = `={{ $json.Email }}`
-  - **company_name** = `={{ $json['Company name'] }}`
-  - **submittedAt** = `={{ $json.submittedAt || $now.toISO() }}`
+- **Mode:** **Keep Only Set**.
+- **Assignments** (⚙️ → **Add Expression** for each value):
+```js
+// New keys the model will use + passthrough fields
+industry             = {{ String($json.Industry || '').trim() }}
+company_size_label   = {{ String($json['Company size'] || '').trim() }}
+annual_revenue_label = {{ String($json['Annual revenue'] || '').trim() }}
+name                 = {{ $json['Name '] || $json.Name || '' }}
+email                = {{ $json.Email }}
+company_name         = {{ $json['Company name'] }}
+submittedAt          = {{ $json.submittedAt || $now.toISO() }}
+```
 
-### Step C — **OpenAI Chat Model**
+---
+
+### Step 3 — OpenAI Chat Model
 - **Drag**: *OpenAI Chat Model*.
-- **Model:** `gpt-4` (or `gpt-4o-mini`). **Temperature:** `0.0` (deterministic).
-- **Connect later** to the Agent’s **AI model** port.
+- **Model:** `gpt-4` (or `gpt-4o-mini`).
+- **Temperature:** `0.0` (deterministic).
+- You’ll connect this to the Agent’s **AI model** port in the next step.
 
-### Step D — **AI Score calculator** (Agent)
-- **Drag**: *Agent* → name it **AI Score calculator**.
+---
+
+### Step 4 — Agent (AI Score calculator)
+- **Drag**: *Agent (LangChain)* → rename **AI Score calculator**.
 - **Connect**:
   - *Filtering data → AI Score calculator* (main).
-  - *OpenAI Chat Model → AI Score calculator* (dotted AI model port).
-- **Prompt type:** *Define*.
-- **Text:** *(paste exactly)*
-```
+  - *OpenAI Chat Model → AI Score calculator* (dotted **AI model** port).
+- **Prompt type:** **Define**.
+- **Text** (paste exactly):
+```txt
 You are a deterministic lead-scoring assistant. You will receive exactly three fields: 
 industry, company_size_label, and annual_revenue_label. Compute a single integer final score 
 from 0–100 using the rubric below. Clamp to 0–100. Output only the integer (no words, no JSON, 
@@ -121,61 +120,105 @@ INPUT:
 }
 ```
 - **System message (optional):**
-```
+```txt
 Return only a single integer 0–100. No words, no symbols, no JSON.
 ```
 
-### Step E — **Merge** (combine)
+> The Agent’s output will be in `{{$json.output}}`. If your model ever returns extra text, add the optional “Coerce score” step below.
+
+---
+
+### (Optional) Step 5 — Code (Coerce score)
+- **Drag**: *Code* → rename **Coerce score**.
+- **Connect**: *AI Score calculator → Coerce score* → then use **Coerce score** as input to **Merge** (instead of the Agent directly).
+- **Language:** JavaScript.
+- **Code:**
+```javascript
+// Accepts agent output like "85", "85\\n", or "Score: 85" and produces a clean integer 0–100
+const out = [];
+for (const item of items) {
+  const raw = String(item.json?.output ?? item.json?.text ?? item.json ?? '').trim();
+  const m = raw.match(/-?\\d+/);
+  let score = m ? parseInt(m[0], 10) : 0;
+  if (isNaN(score)) score = 0;
+  score = Math.min(100, Math.max(0, score));
+  out.push({ json: { ...item.json, output: score } });
+}
+return out;
+```
+
+---
+
+### Step 5 (or 6 if using Code) — Merge (combine)
 - **Drag**: *Merge*.
 - **Connect**:
-  - *AI Score calculator → Merge (Input 1)*
+  - **If you used “Coerce score”** → *Coerce score → Merge (Input 1)*
+  - **Otherwise** → *AI Score calculator → Merge (Input 1)*
   - *On form submission → Merge (Input 2)*
-- **Mode:** `Combine`
+- **Mode:** `Combine`  
 - **Combine by:** `Combine All`
 
-### Step F — **If** (route by score)
+---
+
+### Step 6 (or 7) — If (route by score)
 - **Drag**: *If*.
 - **Connect**: *Merge → If*.
-- **Type validation:** *Strict*.
-- **Condition:** **Number** → `>=`
-  - Left: `={{ $json.output }}`
-  - Right: `60`
+- **Type validation:** **Strict**.
+- **Condition:** **Number** `>=`
+```txt
+Left  = {{ $json.output }}
+Right = 60
+```
 
-### Step G (TRUE) — **Gmail → Send a message**
-- **Drag**: *Gmail* → name it **Send a message**.
+---
+
+### Step 7 (or 8) — Gmail (Send a message) — TRUE branch
+- **Drag**: *Gmail* → rename **Send a message**.
 - **Connect**: *If (true) → Send a message*.
-- **To**: your list (comma-separated)
+- **To**: comma-separated recipients.
 - **Subject**: `AI Agent Lead Qualification — Summary`
-- **Message (HTML)**: use your provided template; make sure the expressions are present for score and fields.
+- **Message (HTML)**: paste your template; keep these expressions:
+```txt
+{{ $json.output }}
+{{ $('On form submission').item.json['Name '] || $('On form submission').item.json.Name }}
+{{ $('On form submission').item.json['Company name'] }}
+{{ $('On form submission').item.json.Industry }}
+{{ $('On form submission').item.json['Company size'] }}
+{{ $('On form submission').item.json['Annual revenue'] }}
+```
 
 **Email example**  
 ![Email result](images/gmail.png)
 
-### Step H (FALSE) — **Google Sheets → Append**
-- **Drag**: *Google Sheets* → name it **Append row in sheet**.
+---
+
+### Step 8 (or 9) — Google Sheets (Append) — FALSE branch
+- **Drag**: *Google Sheets* → rename **Append row in sheet**.
 - **Connect**: *If (false) → Append row in sheet*.
-- **Operation:** `Append`
-- **Mapping (Define Below):**
-  - **Lead Score** = `={{ $json.output }}`
-  - **Name** = `={{ $('On form submission').item.json['Name '] || $('On form submission').item.json.Name }}`
-  - **Email** = `={{ $('On form submission').item.json.Email }}`
-  - **Company name** = `={{ $('On form submission').item.json['Company name'] }}`
-  - **Industry** = `={{ $('On form submission').item.json.Industry }}`
-  - **Company size** = `={{ $('On form submission').item.json['Company size'] }}`
-  - **Annual revenue** = `={{ $('On form submission').item.json['Annual revenue'] }}`
-  - **submittedAt** = `={{ $('On form submission').item.json.submittedAt }}`
+- **Operation:** `Append`.
+- **Mapping (Define Below)** — use these expressions:
+```txt
+Lead Score     = {{ $json.output }}
+Name           = {{ $('On form submission').item.json['Name '] || $('On form submission').item.json.Name }}
+Email          = {{ $('On form submission').item.json.Email }}
+Company name   = {{ $('On form submission').item.json['Company name'] }}
+Industry       = {{ $('On form submission').item.json.Industry }}
+Company size   = {{ $('On form submission').item.json['Company size'] }}
+Annual revenue = {{ $('On form submission').item.json['Annual revenue'] }}
+submittedAt    = {{ $('On form submission').item.json.submittedAt }}
+```
 
 **Sheet example**  
 ![Sheet result](images/sheets.png)
 
 ---
 
-## R — Review (test & troubleshoot)
-- **Test** three submissions to hit both branches. Confirm `output` on **Merge** before the **If** gate.
-- **If not routing** → Make sure `output` is numeric; set OpenAI temperature to `0.0`.  
-- **Sheet append fails** → Share the Sheet with your Google credential; confirm header names.  
-- **Email shows blanks** → Double-check expressions, especially for `Name ` vs `Name`.
+## 4) Test & Troubleshoot
+- Submit 2–3 test leads to hit both branches.
+- If the **If** node never routes TRUE, inspect the value of `output` on **Merge**; ensure the model temperature is `0.0`. Add the **Coerce score** node if needed.
+- If **Sheets** append fails, share the Sheet with your Sheets credential and verify header names.
+- If the **email** shows blanks, double‑check the expressions (especially `Name ` vs `Name`).
 
 ---
 
-**Ship it:** Click **Execute workflow** → verify → toggle **Active** to go live.
+**Go live:** Click **Execute workflow** to validate, then toggle **Active** (top‑right).
