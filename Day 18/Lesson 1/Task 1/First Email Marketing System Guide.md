@@ -1,11 +1,10 @@
+# E-Commerce → n8n Cloud Intake (Lovable Frontend) — **SUPER RULES Final Guide**
 
-# E‑Commerce → n8n Cloud Intake (Lovable Frontend) — **SUPER RULES Final Guide**
-
-**Goal (1‑liner):** Launch a Lovable.dev storefront that posts validated orders to **n8n Cloud (Production Webhook)**, where n8n normalizes data and (optionally) sends an HTML email + logs to Google Sheets.
+**Goal (1-liner):** Launch a Lovable.dev storefront that posts validated orders to **n8n Cloud (Production Webhook)**, where n8n normalizes data and (optionally) sends an HTML email + logs to Google Sheets.
 
 ---
 
-## At‑a‑glance outcomes
+## At-a-glance outcomes
 - ✅ **n8n Cloud** workspace is live and the workflow is **Active**
 - ✅ You’re using the **Production Webhook URL** (path contains `/webhook/…`)
 - ✅ Lovable storefront **POSTs** full order JSON to n8n
@@ -16,11 +15,11 @@
 ---
 
 ## Prereqs & Auth (do this first)
-- **n8n Cloud** account + workspace URL
-- **Lovable.dev** account
+- **n8n Cloud** account + workspace URL  
+- **Lovable.dev** account  
 - n8n **Credentials** (create in **Credentials**):
-  - **Gmail (OAuth2)** — send confirmation email
-  - **Google Sheets (OAuth2)** — append order rows
+  - **Gmail (OAuth2)** — send confirmation email  
+  - **Google Sheets (OAuth2)** — append order rows  
   - **Gemini API** — generate email `<body>` HTML
 
 ---
@@ -30,18 +29,18 @@
 ➜ **AI Agent (Gemini)** → **Gmail: Send a message**  
 ➜ **Google Sheets: Append row**
 
-![Workflow Canvas](images/canvas.png")
+![Workflow Canvas](./images/canvas.png)
 
 ---
 
-## Part 1 — Lovable E‑commerce (Production‑safe)
+## Part 1 — Lovable E-commerce (Production-safe)
 
 ### 1) Get on **n8n Cloud**
-➜ a. Sign up/log in → open your workspace  
-➜ b. **Workflows → New** → name: **E‑commerce Intake**
+- Sign up/log in → open your workspace  
+- **Workflows → New** → name: **E-commerce Intake**
 
 ### 2) Create the **Webhook** in n8n
-**Operation / Mode (drag & drop):**  
+**Operation / Mode (drag & drop):**
 - Node: **Webhook**  
 - **HTTP Method:** `POST`  
 - **Path:** keep generated or set `ecommerce-intake`  
@@ -59,11 +58,11 @@ Always use n8n Production Webhook:
 - Keep workflow Active in n8n Cloud
 ```
 
-### 4) Create the **E‑commerce site** in Lovable
-➜ a. Open **Lovable.dev** → create new project  
-➜ b. Paste the **prompt** below (replace URL with your **Production** webhook)  
-➜ c. Generate app → set its config var to your **Production** Webhook URL  
-➜ d. Publish (preview OK for testing)
+### 4) Create the **E-commerce site** in Lovable
+- Open **Lovable.dev** → create new project  
+- Paste the **prompt** below (replace URL with your **Production** webhook)  
+- Generate app → set its config var to your **Production** Webhook URL  
+- Publish (preview OK for testing)
 
 **Lovable Prompt — paste as is, replace URL**
 ```
@@ -240,11 +239,19 @@ Form Layout:
 - Quantities passed correctly
 
 Success Criteria (ALL MUST PASS)
-- Product Display, Cart Functionality, Form Collection, Quantity Tracking,
-- Webhook Integration (POST to Production URL),
+- Product Display, Cart Functionality, Form Collection, Quantity Tracking,  
+- Webhook Integration (POST to Production URL),  
 - Complete Payload, Full Order Flow, Validation, User Feedback, Cart Reset
 ```
+###  place a Order in E-commerce website 
 
+- place a order  
+- enter the details  
+- After placing a order that all details will be sent to n8n WEBHOOL_URL .  
+- NOTE :- make sure before placing order turn on your webhook is on OR Running .
+
+![E-commerce Overview](./images/E-commerce.png)
+```
 ---
 
 ## Part 2 — n8n Workflow (intake → email → sheets)
@@ -268,10 +275,9 @@ Success Criteria (ALL MUST PASS)
 | Google Sheets | Append | Define columns | Map columns to flat keys |
 
 ### 1) Webhook (Production)
-- **HTTP Method:** `POST`
-- **Path:** `ecommerce-intake` (or random)
+- **HTTP Method:** `POST`  
+- **Path:** `ecommerce-intake` (or random)  
 - **Activate** workflow → copy **Production URL** (contains `/webhook/…`)
-
 ```
 Use Production only → /webhook/
 Do NOT use Test → /webhook-test/
@@ -295,11 +301,85 @@ Order_status = {{ $json.body.order_status }}
 **Wire:** **Webhook → Edit Fields (Main)**
 
 ### 3) AI email `<body>` — **Gemini** + **AI Agent**
-- **Google Gemini Chat Model** → select credential
-- **AI Agent** → Prompt Type **Define**; paste System/Prompt; connect **Gemini → AI Agent (Language Model)** and **Edit Fields → AI Agent (Main)**
+- **Google Gemini Chat Model** → select credential  
+- **AI Agent** → **Prompt Type: Define**; connect **Gemini → AI Agent (Language Model)** and **Edit Fields → AI Agent (Main)**
+
+**AI Agent — System Message (paste this)**
+```
+You are a senior E-commerce Communications AI that crafts production-ready EMAIL HTML bodies.
+
+PRIMARY GOAL
+• Generate a polished, brand-safe, responsive HTML email BODY (return ONLY <body>…</body>, no <html>, no <head>, no Markdown, no code fences).
+
+INPUTS YOU MAY RECEIVE
+• order_id, order_date, order_status
+• customer: name, email, phone
+• address: street, apartment, city, state, zip, country (may arrive as a JSON string—parse it safely)
+• items: product_name, category, quantity, unit_price (or item_amount/total); currency (default "INR")
+• links: view_order_url, help_center_url, support_email, support_phone
+• brand: brand_name, logo_url, brand_color (hex), address_block
+
+RULES
+1) Return ONLY <body>…</body> with inline CSS and a 600px table layout.
+2) Use email-safe markup (role="presentation", proper alt text, accessible contrast).
+3) Omit missing fields; never show "N/A".
+4) Format numbers with separators; prefix currency symbol when known (₹).
+5) Tone: concise and courteous; never echo raw JSON or placeholders.
+6) Add: <!-- PREHEADER: Your order {{ $json.OrderID }} is confirmed. -->
+7) Include a "View your order" CTA only if a URL is provided.
+8) Add a footer with brand address & support if provided.
+
+FINAL CONTRACT
+• Output must be ONLY the <body>…</body> HTML. No explanations, no wrappers.
+```
+
+**AI Agent — Prompt Template (Define → Text)**
+```
+Use the normalized payload to generate the email BODY HTML now.
+
+Brand:
+- brand_name: {{ $json.brand_name || "Your Store" }}
+- logo_url: {{ $json.logo_url || "" }}
+- brand_color: {{ $json.brand_color || "#0E7C86" }}
+
+Order:
+- order_id: {{ $json.OrderID || $json.order_id }}
+- order_date: {{ $json.order_date || $now }}
+- order_status: {{ $json.Order_status || $json.order_status || "confirmed" }}
+
+Customer:
+- name: {{ $json['Name '] }}
+- email: {{ $json.Gmail || $json.customer_email }}
+- phone: {{ $json.Mobile || $json.customer_phone }}
+
+Shipping Address (may be a JSON string in $json.Address):
+- address_raw: {{ $json.Address }}
+- street: {{ $json.address?.street || "" }}
+- apartment: {{ $json.address?.apartment || "" }}
+- city: {{ $json.address?.city || "" }}
+- state: {{ $json.address?.state || "" }}
+- zip: {{ $json.address?.zip || "" }}
+- country: {{ $json.address?.country || "" }}
+
+Item (single example; loop upstream if multiple):
+- product_name: {{ $json.Product_name || $json.product_name }}
+- category: {{ $json.Category || $json.category }}
+- quantity: {{ $json.Qunatity || $json.quantity || 1 }}
+- item_amount: {{ $json.Item_Amount || $json.unit_price || $json.total }}
+- currency: {{ $json.currency || "INR" }}
+
+Links & Support:
+- view_order_url: {{ $json.view_order_url || "" }}
+- help_center_url: {{ $json.help_center_url || "" }}
+- support_email: {{ $json.support_email || "support@example.com" }}
+- support_phone: {{ $json.support_phone || "" }}
+- brand_address_block: {{ $json.brand_address_block || "" }}
+
+Return ONLY the <body>…</body> HTML per the System rules.
+```
 
 **Expected output (Gmail-ready email body):**  
-![Email Confirmation](images/Email.png")
+![Email Confirmation](./images/Email.png)
 
 ### 4) Email — **Gmail: Send a message**
 - **To:** your test email  
@@ -328,11 +408,11 @@ ORDER STATUS  → {{ $json.Order_status }}
 ```
 
 **Result in Sheets:**  
-![Sheets Row](images/sheets.png")
+![Sheets Row](./images/sheets.png)
 
 ---
 
-## Copy‑Paste Blocks
+## Copy-Paste Blocks
 
 ### A) Sample checkout payload (`payload.json` already included)
 ```json
@@ -363,9 +443,7 @@ ORDER STATUS  → {{ $json.Order_status }}
 
 ### B) cURL test (replace with your **Production** Webhook)
 ```bash
-curl -X POST "https://YOUR-WORKSPACE.app.n8n.cloud/webhook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" \
-  -H "Content-Type: application/json" \
-  -d @payload.json
+curl -X POST "https://YOUR-WORKSPACE.app.n8n.cloud/webhook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"   -H "Content-Type: application/json"   -d @payload.json
 ```
 
 ---
@@ -391,14 +469,6 @@ curl -X POST "https://YOUR-WORKSPACE.app.n8n.cloud/webhook/xxxxxxxx-xxxx-xxxx-xx
 ---
 
 ## What to Deliver
-- ✅ Lovable app pointed to **Production Webhook**
-- ✅ Active n8n workflow with Webhook → Edit Fields → AI Agent → (Gmail/Sheets optional)
+- ✅ Lovable app pointed to **Production Webhook**  
+- ✅ Active n8n workflow with Webhook → Edit Fields → AI Agent → (Gmail/Sheets optional)  
 - ✅ Successful test (payload posted, email & sheet verified)
-
----
-
-**Ready to use.** This package includes:
-- `README.md` (this guide)
-- `payload.json` (sample test)
-- `E-commerce workflow.json` (uploaded workflow)
-- `/images` (workflow canvas, email, sheets)
