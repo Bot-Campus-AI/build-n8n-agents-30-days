@@ -1,91 +1,76 @@
-# Universal Form Intelligence (n8n) — Reminder / Database / Broadcast
+# Universal Form Intelligence (n8n) — Reminder / Database / Broadcast (Beginner Workshop)
 
-**One-line goal:** turn a single form into three actions—create a Calendar event, log to MySQL, or broadcast to Slack—with LLM assist.
-
----
-
-## At-a-glance outcomes
-- Single **Form Trigger** drives three paths via **Switch** (`Reminder | Database | Broadcast`).
-- **Reminder** → LLM converts natural text → RFC3339 → Google Calendar event.
-- **Database** → Append name/email/data to **MySQL** with large text support.
-- **Broadcast** → LLM rewrites message in a professional tone → Slack channel post.
+**Goal:** turn a single form into three actions—create a Google Calendar event, insert a MySQL row, or broadcast to Slack—with LLM assistance.
 
 ---
 
-## Prereqs & Auth (do this first)
-➜ a. **Slack setup video:** https://www.botcampus.ai/lessons/slack-authentication-and-workflow  
-➜ b. **MySQL install video:** https://www.botcampus.ai/lessons/mysql-authentication-and-workflow
+## 1) What you will build
+- One **Form Trigger** fans out via a **Switch** to three branches: **Reminder**, **Database**, **Broadcast**.
+- Reminder → **Gemini** formats time → **Code** normalizes JSON → **Google Calendar** creates the event.
+- Database → **MySQL** inserts `name/email/data/created_at`.
+- Broadcast → **Gemini** rewrites the note → **Slack** posts it.
 
-**Also required**
-- **n8n** (Cloud or self-hosted).
-- **Google Calendar OAuth2** in n8n  
-  - Enable **Google Calendar API** in Google Cloud.  
-  - Create OAuth Client (Web).  
-  - In n8n **Credentials → Google Calendar OAuth2**, grant scope: `https://www.googleapis.com/auth/calendar.events`.
-- **Slack** credential in n8n  
-  - Slack App → add scope `chat:write`, install to workspace → paste Bot token in n8n Slack credential (or OAuth2).
-- **MySQL 8.x** reachable from n8n  
-  - Create DB (e.g., `n8n`), user with `SELECT/INSERT/ALTER`.
-- **Gemini API key** in n8n  
-  - **Credentials → Google PaLM (Gemini)**; use a fast model (e.g., *Gemini 2.5-flash*).
-- **Timezone default:** Asia/Kolkata (IST) used by Reminder path.
+**Canvas preview**  
+![Workflow canvas](images/canvas.png)
 
 ---
 
-## Architecture snapshot (nodes/tools)
-1) **On form submission (Form Trigger)** → fields: **Name**, **Action (Dropdown)**, **Event description**, **Email**  
-2) **Switch** on `Action`  
-   - **Reminder** → *Basic LLM Chain (Gemini)* → **Code (normalize JSON)** → **Google Calendar: Create an event**  
-   - **Broadcast** → *Basic LLM Chain1 (Gemini)* → **Slack: Send a message**  
-   - **Database** → **MySQL: Insert rows in a table**
+## 2) Prerequisites
+- n8n (Cloud or self‑hosted) with access to the node panel.
+- Credentials configured in **Settings → Credentials**:
+  - **Google Calendar OAuth2** (scope `https://www.googleapis.com/auth/calendar.events`)
+  - **Slack** (Bot token with `chat:write` or OAuth2)
+  - **MySQL** (host/user/password/db reachable from n8n)
+  - **Google PaLM (Gemini)** API key (model e.g., *Gemini 2.5‑flash*)
+- Timezone default we will assume: **Asia/Kolkata (IST)**.
+- For setup videos: Slack → https://www.botcampus.ai/lessons/slack-authentication-and-workflow    
+- MySQL → https://www.botcampus.ai/lessons/mysql-authentication-and-workflow
 
 ---
 
-## Your run screenshots (reference)
-![Calendar result](ufi_images/calendar.png)  
-*Figure 1 — Event created 10–11 PM IST.*
-
-![Workflow canvas](ufi_images/canvas.png)  
-*Figure 2 — Final n8n canvas with three branches.*
-
-![MySQL rows](ufi_images/mysql.png)  
-*Figure 3 — Rows inserted into `slack` table.*
-
-![Slack post](ufi_images/slack.png)  
-*Figure 4 — Broadcast message posted to `#n8n-alerts`.*
+## 3) Quick n8n glossary (1 min)
+- **Node panel**: left sidebar where you search nodes and drag them to the canvas.
+- **Main output / input**: white dots on the right/left side of nodes used to connect flows.
+- **Expression**: values wrapped like `{{ $json.field }}` (click the small gear → *Add Expression*).
 
 ---
 
-## Step-by-Step (with in-place copy blocks)
+## 4) Build the workflow — step by step
 
-### 1) Form Trigger — clean field labels & options
-- **Form fields (exact labels):** `Name`, `Action`, `Event description`, `Email`  
-- **Action (Dropdown) options (case sensitive):** `Reminder`, `Database`, `Broadcast`  
-- If you already created **`Event description `** *(note trailing space)*, either rename it to **`Event description`** or keep as-is; in later expressions we’ll read both keys.
+### Step 1 — Add the **Form Trigger**
+1. In the node panel search **“Form Trigger”** → **drag** it to the canvas.
+2. In the right panel set:
+   - **Form title**: `Universal Form Intelligence`
+   - **Fields** (exact labels):
+     - `Name` *(Text)*
+     - `Action` *(Dropdown → options: `Reminder`, `Database`, `Broadcast`; Required = On)*
+     - `Event description` *(Text)*  *(If you already have `Event description ` with a trailing space, keep it; we will read both.)*
+     - `Email` *(Email)*
+3. Click **Save**.
 
-**Where to paste (Form Trigger → Fields)**  
-_No code—verify labels and dropdown values exactly as above._
-
----
-
-### 2) Switch — fix comparisons (remove stray `=`)
-Your JSON had `=Reminder` and `=Database` in `rightValue`. Remove the `=`. Keep **Case Sensitive = true**.
-
-**Set these rules (Switch → Rules):**
+### Step 2 — Add a **Switch** to route by Action
+1. Drag **Switch** to the canvas.
+2. Connect: **Form Trigger → Switch** (main output to main input).
+3. In Switch **Mode** choose **Rules**.
+4. Add **three rules** (case‑sensitive equals). Use the gear icon → *Add Expression* for the left‑hand side:
 ```
 Left:  {{$json.Action}}   Operator: equals   Right: Reminder
 Left:  {{$json.Action}}   Operator: equals   Right: Broadcast
 Left:  {{$json.Action}}   Operator: equals   Right: Database
 ```
-
-*(Optional) Add a **Default** output → small Respond/Slack message: “Pick a valid Action.”*
+*(Tip: a 4th “Default” output can show a friendly error.)*
 
 ---
 
-### 3) Reminder path — LLM → normalized JSON → Calendar
+### Step 3 — Build the **Reminder** branch (Calendar)
+**Nodes you will add and connect in order (top branch):**
+`Switch: Output #1` → **Basic LLM Chain** → **Code** → **Google Calendar**
 
-**3a) Basic LLM Chain (Gemini) → `text` field**  
-_Paste this prompt (keeps output one-line JSON and IST logic):_
+#### 3.1 Add **Basic LLM Chain**
+1. Drag **Basic LLM Chain** to the canvas (LangChain category).
+2. Connect **Switch → Basic LLM Chain** from output #1.
+3. In **Model input**, drag a dotted line from **Google Gemini Chat Model** (see next step) to this chain.
+4. Open the chain, set **Prompt type** = *Define*, and paste into **Text**:
 ```
 You convert ONE natural-language reminder into ONE Google Calendar–ready payload.
 
@@ -116,10 +101,15 @@ NOW_IST: "{{ $now.setZone('Asia/Kolkata').toISO() }}"
 Return only the JSON object.
 ```
 
-**Model connection (dotted line):** Connect **Google Gemini Chat Model** to this Chain via **AI Model** input.
+#### 3.2 Add **Google Gemini Chat Model**
+1. Drag **Google Gemini Chat Model**.
+2. In **Credentials**, select your Gemini key (model *Gemini 2.5‑flash*).
+3. Connect the **dotted “AI Model” port** of the model to the **Basic LLM Chain**.
 
-**3b) Code (JavaScript) — normalize AI output**  
-_Paste this into the **Code** node:_
+#### 3.3 Add **Code** (JavaScript normalizer)
+1. Drag **Code**.
+2. Connect **Basic LLM Chain → Code**.
+3. Open Code → **Language** = JavaScript → paste:
 ```javascript
 function coalesce(...v){ for (const x of v) if (x!==undefined && x!==null && String(x).trim()!=='') return x }
 function stripFences(s){ return String(s).replace(/^\s*```[a-zA-Z]*\s*|\s*```\s*$/g,'').trim() }
@@ -144,7 +134,7 @@ function addMinutesKeepOffset(iso, mins){
   const HH = pad(endLocal.getUTCHours()), mm = pad(endLocal.getUTCMinutes()), ss = pad(endLocal.getUTCSeconds()), SSS = ms3(endLocal.getUTCMilliseconds());
   return `${yyyy}-${MM}-${dd}T${HH}:${mm}:${ss}.${SSS}${off}`;
 }
-function titleCase(s){ return String(s||'').trim().replace(/\s+/g,' ').replace(/\w/g,c=>c.toUpperCase()) }
+function titleCase(s){ return String(s||'').trim().replace(/\s+/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) }
 
 const out = [];
 for (const [i, item] of items.entries()){
@@ -180,7 +170,11 @@ for (const [i, item] of items.entries()){
 return out;
 ```
 
-**3c) Google Calendar — Create an event**
+#### 3.4 Add **Google Calendar**
+1. Drag **Google Calendar** node.
+2. **Operation** = *Create an event*.
+3. Connect **Code → Google Calendar**.
+4. Set fields (use **Add Expression**):
 ```
 Calendar     = (your calendar id)
 Start        = {{ $json.startDateTime }}
@@ -188,13 +182,19 @@ End          = {{ $json.endDateTime }}
 Summary      = {{ $json.summary }}
 Description  = {{ $json.description }}
 ```
+**Result**  
+![Calendar result](images/calendar.png)
 
 ---
 
-### 4) Broadcast path — LLM rewrite → Slack
+### Step 4 — Build the **Broadcast** branch (Slack)
+**Nodes in order (middle branch):**
+`Switch: Output #2` → **Basic LLM Chain1** → **Slack: Send a message**
 
-**4a) Basic LLM Chain1 (Gemini) → `text` field**  
-_Paste the rewrite instruction:_
+#### 4.1 Add **Basic LLM Chain1**
+- Drag, connect from **Switch output #2**.
+- Connect **Google Gemini Chat Model1** to the chain’s **AI Model** port.
+- In **Text**, paste:
 ```
 Rewrite the user’s short note into a professional, medium-length Slack update (80–150 words).
 Tone: formal yet approachable. Focus on purpose, context, stakeholders, next steps.
@@ -211,30 +211,54 @@ Guidelines:
 Return only the rewritten paragraph as plain text (no markdown).
 ```
 
-**Model connection:** Connect **Google Gemini Chat Model1** to this Chain via **AI Model** input.
+#### 4.2 Add **Slack → Send a message**
+- **Select** = *Channel*; choose your **Channel** or paste the ID.
+- **Text** (Add Expression):
+```
+{{ $json.text || $json.response || $json.output }}
+```
 
-**4b) Slack — Send a message**
-```
-Channel: (your channel or ID, e.g., C09HNRB0KMH)
-Text:    {{ $json.text || $json.response || $json.output }}
-```
+**Result**  
+![Slack post](images/slack.png)
 
 ---
 
-### 5) Database path — validate email → insert MySQL
-*(Optional but recommended) Add an IF node before insert: if `{{$json.Email}}` is empty AND `{{$json.Action}} == 'Database'` → route to a Slack/Respond node: “Email required for Database action.”*
+### Step 5 — Build the **Database** branch (MySQL)
+**Nodes in order (bottom branch):**
+`Switch: Output #3` → **MySQL: Insert rows in a table**
 
-**5a) MySQL — Insert rows in a table**
+#### 5.1 Add **MySQL**
+- **Operation** = *Insert*  
+- **Data Mode** = *Define Below*  
+- **Table** = `slack`  
+- **Values to send** (Add rows):
 ```
-Table: slack
-
 name        = {{ $json.Name }}
 email       = {{ $json.Email || '' }}
 data        = {{ $json['Event description'] || $json['Event description '] || '' }}
 created_at  = {{ $json.submittedAt || $now.toISO() }}
 ```
 
-**5b) DDL for the table (run once in MySQL Workbench)**
+**Result**  
+![MySQL rows](images/mysql.png)
+
+---
+
+## 5) Test & go live
+1. Click **Execute workflow** to test. Try three submissions: `Reminder`, `Database`, `Broadcast`.
+2. Verify: Calendar event (22:00–23:00 if “10 PM tonight”), Slack message, MySQL row.
+3. When happy, toggle **Active** (top-right) to run on your n8n instance.
+
+**Common fixes**
+- Switch not routing → values must be exactly `Reminder`, `Database`, `Broadcast` (no `=`).
+- Calendar “invalid datetime” → ensure **Code** is between LLM and Calendar; check keys.
+- Empty Slack text → use `{{ $json.text || $json.response || $json.output }}`.
+- MySQL errors → run the DDL, verify credentials, ensure `data` is non‑NULL.
+- Field mismatch → if a field is `Event description ` (with space), reference both keys as shown.
+
+---
+
+## Appendix — MySQL DDL (run once)
 ```sql
 CREATE TABLE IF NOT EXISTS slack (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -244,72 +268,8 @@ CREATE TABLE IF NOT EXISTS slack (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Optional upgrades
+-- ALTER TABLE slack DROP INDEX email;
+-- ALTER TABLE slack MODIFY COLUMN data LONGTEXT NOT NULL;
+-- CREATE INDEX idx_email ON slack (email);
 ```
-
-*(If you previously had a UNIQUE constraint on email, drop it and widen `data`):*
-```sql
--- Drop unique index if present (use the actual index name from SHOW INDEX)
-ALTER TABLE slack DROP INDEX email;           -- or DROP INDEX email_unique;
--- Widen data
-ALTER TABLE slack MODIFY COLUMN data LONGTEXT NOT NULL;
--- Create non-unique helper index
-CREATE INDEX idx_email ON slack (email);
-```
-
----
-
-## Node list (order) & key parameters
-
-| # | Node | Key settings / expressions |
-|---|------|----------------------------|
-| 1 | On form submission (Form Trigger) | Fields: Name, Action=Dropdown(Reminder,Database,Broadcast), Event description, Email |
-| 2 | Switch | Three rules: `{{$json.Action}} == Reminder`, `== Broadcast`, `== Database` |
-| 3 | Google Gemini Chat Model | Credential: *Gemini 2.5-flash* |
-| 4 | Basic LLM Chain (Reminder) | Prompt from Step 3a |
-| 5 | Code (JavaScript) | Normalizer code from Step 3b |
-| 6 | Google Calendar: Create an event | Start/End/Summary/Description from JSON |
-| 7 | Google Gemini Chat Model1 | Credential: *Gemini 2.5-flash* |
-| 8 | Basic LLM Chain1 (Broadcast) | Prompt from Step 4a |
-| 9 | Slack: Send a message | Text: `{{$json.text || $json.response || $json.output}}` |
-| 10 | MySQL: Insert rows in a table | Mapping from Step 5a; credential “MySQL account” |
-
----
-
-## Testing & Validation
-
-**A) Reminder**  
-- Action: `Reminder`  
-- Event description: `Dinner with a friend at 10:00 PM tonight near Jubilee Hills`  
-- Expect: Calendar event today **22:00–23:00 IST**. *(See Figure 1)*
-
-**B) Database**  
-- Action: `Database`  
-- Name: `Jashwanth`  
-- Email: `jashwanthboddupally@gmail.com`  
-- Event description: _any long text_  
-- Expect: New row in `slack`. *(See Figure 3)*
-
-**C) Broadcast**  
-- Action: `Broadcast`  
-- Event description: `Standup moved to 10:30 AM; infra deploy at 3 PM. QA to retest build 142.`  
-- Expect: Professional message in Slack. *(See Figure 4)*
-
----
-
-## Troubleshooting
-
-- Switch not routing → ensure right values are exactly `Reminder`, `Database`, `Broadcast` (no leading `=`).  
-- LLM returns markdown → Code node strips fences and extracts JSON; still ensure the Chain prompt forbids markdown.  
-- Calendar “Invalid DateTime” → Code node must run *before* Calendar node; verify JSON keys.  
-- Empty Slack message → `{{$json.text || $json.response || $json.output}}`.  
-- MySQL insert fails → run the DDL, confirm table and credential, ensure `data` isn’t NULL.  
-- Form field mismatch → if you kept `Event description ` (with space), always reference both keys as shown.
-
----
-
-## What to Deliver
-- Fixed **Switch** comparisons, clean **Form** fields.  
-- **Reminder**: Gemini Chain → Code normalizer → Calendar event.  
-- **Broadcast**: Gemini Chain1 → Slack message.  
-- **Database**: MySQL DDL + Insert mapping.  
-- Screens consistent with **Figures 1–4**.
