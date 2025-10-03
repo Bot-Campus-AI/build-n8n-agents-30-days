@@ -2,14 +2,73 @@
   "name": "Error Handling",
   "nodes": [
     {
+      "parameters": {
+        "formTitle": "Newsletter Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "First Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Last Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "phone number",
+              "fieldType": "number",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -304,
+        0
+      ],
+      "id": "299d3b9a-7116-4a2c-8764-9345766cb95d",
+      "name": "On form submission",
+      "webhookId": "987947c4-dcd8-4c14-a0e4-6c95f1ed1da4"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "Confrim",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        -192
+      ],
+      "id": "c22b71ab-27cc-4bba-98fb-f19d34deaab7",
+      "name": "Send a message",
+      "webhookId": "2d406cf7-d6d4-4479-a0ff-f8e86922deb2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "xAMl4zSjBRQk6v6r",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
       "parameters": {},
-      "id": "e5ad9917-87af-4d9b-a12a-1895ca4c9130",
+      "id": "6133e6ac-ac28-46e0-99cd-a4312ae8f5cc",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -560,
-        304
+        -256,
+        1136
       ]
     },
     {
@@ -28,13 +87,13 @@
         },
         "options": {}
       },
-      "id": "7ec53318-f5dc-417d-82c9-206de2f463ad",
+      "id": "9993b59d-3bf0-4192-812f-743f73354737",
       "name": "Set Bad Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        512,
-        64
+        720,
+        944
       ]
     },
     {
@@ -54,52 +113,47 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        784,
-        64
+        992,
+        944
       ],
-      "id": "811e77f0-4d42-4597-b027-d5c9fcbca5ec",
-      "name": "Append row in sheet",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "OSg7tNEGPGkBKEP6",
-          "name": "Google Sheets account"
-        }
-      }
+      "id": "31b06df9-47ee-4b2a-8198-23f84bd07d98",
+      "name": "Append row in sheet"
     },
     {
       "parameters": {
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "1wqXp2cu4RYs-FPi3GOgUoF7Y69BRUXhp8SHbA9hL3ns",
-          "mode": "list",
-          "cachedResultName": "Order list ",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wqXp2cu4RYs-FPi3GOgUoF7Y69BRUXhp8SHbA9hL3ns/edit?usp=drivesdk"
+          "value": "={{ $json.spreadsheetId }}",
+          "mode": "id"
         },
         "sheetName": {
           "__rl": true,
-          "value": 526249930,
+          "value": 401042151,
           "mode": "list",
-          "cachedResultName": "Orders ",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wqXp2cu4RYs-FPi3GOgUoF7Y69BRUXhp8SHbA9hL3ns/edit#gid=526249930"
+          "cachedResultName": "Error_Handling",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JfUJ3E0hevU3laYzaGUxULYT-SbBmxOEJVK-tD71qVI/edit#gid=401042151"
         },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "DOCUMENT ID ": "={{ $json.document_Id }}",
-            "NAME": "={{ $json.Name }}",
-            "EMAIL": "={{ $json.Email }}"
+            "ID": "={{ $('Good config').item.json.document_Id }}",
+            "NAME": "={{ $('Good config').item.json.Name }}",
+            "EMail": "={{ $('Good config').item.json.Email }}"
           },
-          "matchingColumns": [],
+          "matchingColumns": [
+            "Sheet _ID"
+          ],
           "schema": [
             {
-              "id": "DOCUMENT ID ",
-              "displayName": "DOCUMENT ID ",
+              "id": "ID",
+              "displayName": "ID",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "NAME",
@@ -108,16 +162,18 @@
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
-              "id": "EMAIL",
-              "displayName": "EMAIL",
+              "id": "EMail",
+              "displayName": "EMail",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "type": "string",
-              "canBeUsedToMatch": true
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -128,14 +184,14 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        832,
-        640
+        1248,
+        1520
       ],
-      "id": "43ae044f-4bca-4f58-a48e-c6ee963f8b88",
+      "id": "8c91da4e-1af5-4630-af22-1c65fd31c877",
       "name": "Append row in sheet1",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "OSg7tNEGPGkBKEP6",
+          "id": "tqjFpBwTffq6qvQw",
           "name": "Google Sheets account"
         }
       }
@@ -149,11 +205,11 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        176,
-        -48
+        384,
+        832
       ],
       "typeVersion": 1,
-      "id": "4764ad9b-8f5d-4918-bdd9-7b8a990958c6",
+      "id": "bc30a689-366c-4465-b35e-23329f056280",
       "name": "Sticky Note"
     },
     {
@@ -173,13 +229,13 @@
         },
         "options": {}
       },
-      "id": "42cba814-9e50-48dd-ab72-eb6ec4205469",
+      "id": "408e0b66-6ceb-4d1c-8ac8-1916cfe35f0f",
       "name": "Set Data2",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        208,
-        640
+        416,
+        1520
       ]
     },
     {
@@ -203,13 +259,13 @@
         },
         "options": {}
       },
-      "id": "c7c12827-b7f4-4320-83ce-35c6e60a754a",
+      "id": "82c7819b-c577-4039-a8f0-40eadcd80dfb",
       "name": "Good config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        512,
-        656
+        720,
+        1536
       ]
     },
     {
@@ -229,13 +285,13 @@
         },
         "options": {}
       },
-      "id": "80a3334d-3e6b-42b9-bc33-983550d49ad9",
+      "id": "845aaf6e-c491-4522-8e57-927bf588df21",
       "name": "Set Data 1",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        272,
-        64
+        480,
+        944
       ]
     },
     {
@@ -247,24 +303,71 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        128,
-        544
+        336,
+        1424
       ],
       "typeVersion": 1,
-      "id": "7b579908-9235-48f1-8d7f-fb6ae3b7a107",
+      "id": "85bf5876-347f-4524-9435-e290d86c6cb5",
       "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1JfUJ3E0hevU3laYzaGUxULYT-SbBmxOEJVK-tD71qVI",
+          "mode": "list",
+          "cachedResultName": "n8n",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JfUJ3E0hevU3laYzaGUxULYT-SbBmxOEJVK-tD71qVI/edit?usp=drivesdk"
+        },
+        "title": "Error_Handling",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        976,
+        1536
+      ],
+      "id": "7304be13-c1b5-4630-85a9-c653f9287e0c",
+      "name": "Create sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tqjFpBwTffq6qvQw",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "On form submission": [
+      {
+        "json": {
+          "First Name": "Jashwanth",
+          "Last Name": "Boddupally",
+          "Email": "jashwanthboddupally@gmail.com",
+          "phone number": 9010767269,
+          "submittedAt": "2025-10-01T16:24:40.648+05:30",
+          "formMode": "test"
+        }
+      }
+    ]
+  },
   "connections": {
-    "Manual Trigger": {
+    "On form submission": {
       "main": [
         [
           {
-            "node": "Set Data 1",
+            "node": "Send a message",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
           {
             "node": "Set Data2",
             "type": "main",
@@ -299,7 +402,7 @@
       "main": [
         [
           {
-            "node": "Append row in sheet1",
+            "node": "Create sheet",
             "type": "main",
             "index": 0
           }
@@ -316,17 +419,28 @@
           }
         ]
       ]
+    },
+    "Create sheet": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "87e9c08b-a147-43d1-8d57-db4eb5acf217",
+  "versionId": "2c823556-66f7-433f-9065-c4c0f66292ce",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "029e74343ace7e09d424f762fabbbe35816a726626c29ed43ae074863f99784c"
+    "instanceId": "ce10c10157d15b5f2fbc692795dabfeb448c588cac607b6a1251102b4354dcae"
   },
-  "id": "Wo7CbiBwmBgkquTt",
+  "id": "o3BS24To09fsGRjl",
   "tags": []
 }
