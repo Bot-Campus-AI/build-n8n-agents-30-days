@@ -2,73 +2,14 @@
   "name": "Error Handling",
   "nodes": [
     {
-      "parameters": {
-        "formTitle": "Newsletter Form",
-        "formFields": {
-          "values": [
-            {
-              "fieldLabel": "First Name",
-              "requiredField": true
-            },
-            {
-              "fieldLabel": "Last Name",
-              "requiredField": true
-            },
-            {
-              "fieldLabel": "Email",
-              "fieldType": "email",
-              "requiredField": true
-            },
-            {
-              "fieldLabel": "phone number",
-              "fieldType": "number",
-              "requiredField": true
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.formTrigger",
-      "typeVersion": 2.3,
-      "position": [
-        -304,
-        0
-      ],
-      "id": "299d3b9a-7116-4a2c-8764-9345766cb95d",
-      "name": "On form submission",
-      "webhookId": "987947c4-dcd8-4c14-a0e4-6c95f1ed1da4"
-    },
-    {
-      "parameters": {
-        "sendTo": "={{ $json.Email }}",
-        "subject": "Confrim",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.1,
-      "position": [
-        -80,
-        -192
-      ],
-      "id": "c22b71ab-27cc-4bba-98fb-f19d34deaab7",
-      "name": "Send a message",
-      "webhookId": "2d406cf7-d6d4-4479-a0ff-f8e86922deb2",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "xAMl4zSjBRQk6v6r",
-          "name": "Gmail account"
-        }
-      }
-    },
-    {
       "parameters": {},
-      "id": "6133e6ac-ac28-46e0-99cd-a4312ae8f5cc",
+      "id": "a635d5ae-4530-48ec-b17b-a4a69f40344f",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -256,
-        1136
+        240,
+        -240
       ]
     },
     {
@@ -87,13 +28,13 @@
         },
         "options": {}
       },
-      "id": "9993b59d-3bf0-4192-812f-743f73354737",
+      "id": "ec6b4b2a-adf7-4ee3-bcc7-192a66fdc6c9",
       "name": "Set Bad Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        720,
-        944
+        1216,
+        -432
       ]
     },
     {
@@ -113,10 +54,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        992,
-        944
+        1488,
+        -432
       ],
-      "id": "31b06df9-47ee-4b2a-8198-23f84bd07d98",
+      "id": "f0b6a109-6471-40fe-8e8d-4a43e88d2d7c",
       "name": "Append row in sheet"
     },
     {
@@ -184,10 +125,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        1248,
-        1520
+        1744,
+        144
       ],
-      "id": "8c91da4e-1af5-4630-af22-1c65fd31c877",
+      "id": "5d314795-0cf4-4650-8de1-e85b9ae3b972",
       "name": "Append row in sheet1",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -205,11 +146,11 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        384,
-        832
+        880,
+        -544
       ],
       "typeVersion": 1,
-      "id": "bc30a689-366c-4465-b35e-23329f056280",
+      "id": "fc3fd5f1-5580-448a-afda-3fb3c2648e1e",
       "name": "Sticky Note"
     },
     {
@@ -229,13 +170,13 @@
         },
         "options": {}
       },
-      "id": "408e0b66-6ceb-4d1c-8ac8-1916cfe35f0f",
+      "id": "da83d258-c531-4266-ba97-88094744e903",
       "name": "Set Data2",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        416,
-        1520
+        912,
+        144
       ]
     },
     {
@@ -259,13 +200,13 @@
         },
         "options": {}
       },
-      "id": "82c7819b-c577-4039-a8f0-40eadcd80dfb",
+      "id": "14ff6deb-8ed7-4ca0-a2c4-67de3c5999d5",
       "name": "Good config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        720,
-        1536
+        1216,
+        160
       ]
     },
     {
@@ -285,29 +226,29 @@
         },
         "options": {}
       },
-      "id": "845aaf6e-c491-4522-8e57-927bf588df21",
+      "id": "377cfdd7-9c08-4eaf-9a59-bfba045998fb",
       "name": "Set Data 1",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        480,
-        944
+        976,
+        -432
       ]
     },
     {
       "parameters": {
         "content": "## correct\n## Proper Bulletproof Error Handling\n",
         "height": 320,
-        "width": 1008,
+        "width": 1120,
         "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        336,
-        1424
+        832,
+        48
       ],
       "typeVersion": 1,
-      "id": "85bf5876-347f-4524-9435-e290d86c6cb5",
+      "id": "8355dda0-dfb2-4167-9c07-d3bdb1a6332e",
       "name": "Sticky Note1"
     },
     {
@@ -326,10 +267,10 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        976,
-        1536
+        1472,
+        160
       ],
-      "id": "7304be13-c1b5-4630-85a9-c653f9287e0c",
+      "id": "e9e44da9-31a9-496f-9523-426672014fed",
       "name": "Create sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -339,32 +280,8 @@
       }
     }
   ],
-  "pinData": {
-    "On form submission": [
-      {
-        "json": {
-          "First Name": "Jashwanth",
-          "Last Name": "Boddupally",
-          "Email": "jashwanthboddupally@gmail.com",
-          "phone number": 9010767269,
-          "submittedAt": "2025-10-01T16:24:40.648+05:30",
-          "formMode": "test"
-        }
-      }
-    ]
-  },
+  "pinData": {},
   "connections": {
-    "On form submission": {
-      "main": [
-        [
-          {
-            "node": "Send a message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Manual Trigger": {
       "main": [
         [
