@@ -1,6 +1,10 @@
 
 #Working with files & Database 
 ## Scheduled CSV → Clean → Google Sheets → Email CSV Backup
+---
+### Canvas
+
+![canvas](images/canvas.jpeg)
 
 **Goal (1‑liner):** On a schedule, download a CSV file, clean out rows with missing emails, append the cleaned rows to Google Sheets, and email a CSV backup attachment.
 
